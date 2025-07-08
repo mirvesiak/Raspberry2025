@@ -1,6 +1,6 @@
 #include "camera_stream.hpp"
 #include <opencv2/opencv.hpp>
-#include <external/civetweb/civetweb.h>
+#include "civetweb.h"
 #include <atomic>
 #include <thread>
 #include <vector>
