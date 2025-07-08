@@ -12,10 +12,19 @@
 #include <thread>
 #include <iostream>
 
+static bool setProp(cv::VideoCapture& c, int prop, double val, const char* name)
+{
+    if (!c.set(prop, val)) {
+        std::cerr << "Could not set " << name << " (prop " << prop << ")\n";
+        return false;
+    }
+    return true;
+}
+
 int main() {
     // Open the first video device (usually /dev/video0 or the PiCam).
     // If you have more than one camera, change the index.
-    cv::VideoCapture cap(0, cv::CAP_V4L2);   // Force V4L2 backend for Raspberry Pi
+    cv::VideoCapture cap("/dev/video0", cv::CAP_V4L2);   // Force V4L2 backend for Raspberry Pi
 
     if (!cap.isOpened()) {
         std::cerr << "Could not open camera. Check cabling, permissions, or index.\n";
@@ -42,7 +51,7 @@ int main() {
         std::cerr << "Could not write shot_1.jpg (check filesystem permissions).\n";
         return 1;
     }
-    
+
     std::cout << "Saved shot_1.jpg\n";
 
     // Wait 5 seconds.
