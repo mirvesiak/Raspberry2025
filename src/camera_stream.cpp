@@ -9,6 +9,14 @@
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
 
+static int wsConnect(mg_connection*, void*) { return 0; }           // accept all
+
+static void wsMessage(mg_connection *conn, int, char *data,
+                      size_t len, void*) {
+    auto msg = std::string_view{data, len};
+    std::puts("WebSocket message: " + std::string(msg));
+}
+
 static int streamHandler(struct mg_connection *conn, void * /*cbdata*/)
 {
     // 1.  HTTP headers for MJPEG
@@ -57,15 +65,18 @@ void start_mjpeg_server()
     // CivetWeb config
     const char *options[] = {
         "listening_ports", "8080",
-        "num_threads",     "4",
+        "document_root",   "/home/pi/git/Raspberry2025/www",   // website path
+        "index_files",     "index.html",
+        "num_threads",     "6",
         nullptr
-    };
+    }
     static struct mg_callbacks callbacks;
     struct mg_context *ctx = mg_start(&callbacks, nullptr, options);
 
     // Register the /stream endpoint
     mg_set_request_handler(ctx, "/stream", streamHandler, nullptr);
-
+    mg_set_websocket_handler(ctx, "/ws",    wsConnect,      wsMessage,
+                                          nullptr, nullptr, nullptr);
     std::puts("MJPEG stream running on http://raspberrypi.local:8080/stream");
 }
 
