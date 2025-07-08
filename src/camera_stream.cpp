@@ -9,12 +9,12 @@
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
 
-static int wsConnect(mg_connection*, void*) { return 0; }           // accept all
+static int wsConnect(const mg_connection*, void*) { return 0; }           // accept all
 
 static void wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     auto msg = std::string_view{data, len};
-    std::puts("WebSocket message: " + std::string(msg));
+    std::cout << "WebSocket message: " << std::string(msg) << std::endl;
 }
 
 static int streamHandler(struct mg_connection *conn, void * /*cbdata*/)
@@ -69,7 +69,7 @@ void start_mjpeg_server()
         "index_files",     "index.html",
         "num_threads",     "6",
         nullptr
-    }
+    };
     static struct mg_callbacks callbacks;
     struct mg_context *ctx = mg_start(&callbacks, nullptr, options);
 
