@@ -24,6 +24,6 @@ target_include_directories(Raspberry2025 PRIVATE
     include                       # your own headers
 )
 target_link_libraries(Raspberry2025
-    ${CIVETWEB_LIB}
+    civetweb
     ${OpenCV_LIBS}
 )
