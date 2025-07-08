@@ -22,6 +22,13 @@ int main() {
         return 1;
     }
 
+    setProp(cap, cv::CAP_PROP_FOURCC, cv::VideoWriter::fourcc('M','J','P','G'), "FOURCC");
+    setProp(cap, cv::CAP_PROP_FRAME_WIDTH,  1280, "width");
+    setProp(cap, cv::CAP_PROP_FRAME_HEIGHT,  720, "height");
+    setProp(cap, cv::CAP_PROP_FPS,            30, "fps");
+
+    cap.set(cv::CAP_PROP_BUFFERSIZE, 1);
+
     // Give the sensor a moment to adjust exposure/white‑balance.
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
 
@@ -35,6 +42,7 @@ int main() {
         std::cerr << "Could not write shot_1.jpg (check filesystem permissions).\n";
         return 1;
     }
+    
     std::cout << "Saved shot_1.jpg\n";
 
     // Wait 5 seconds.
