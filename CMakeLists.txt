@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -O2")
 
 # Find packages
 find_package(OpenCV REQUIRED)
+find_package(CivetWeb REQUIRED)
 
 # ---------- CivetWeb (embedded HTTP server) ----------
 #add_library(civetweb STATIC external/civetweb/src/civetweb.c)
