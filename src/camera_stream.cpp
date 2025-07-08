@@ -75,8 +75,7 @@ void start_mjpeg_server()
 
     // Register the /stream endpoint
     mg_set_request_handler(ctx, "/stream", streamHandler, nullptr);
-    mg_set_websocket_handler(ctx, "/ws",    wsConnect,      wsMessage,
-                                          nullptr, nullptr, nullptr);
+    mg_set_websocket_handler(ctx, "/ws", wsConnect, nullptr, wsMessage, nullptr, nullptr);
     std::puts("MJPEG stream running on http://raspberrypi.local:8080/stream");
 }
 
