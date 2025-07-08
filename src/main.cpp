@@ -1,21 +1,19 @@
 #include "include/camera_stream.hpp"
 #include <iostream>
+#include <signal.h>
+#include <unistd.h>
+
+void onSignal(int) {
+    stop_mjpeg_server();
+    std::exit(0);
+}
 
 int main()
 {
     try {
+        signal(SIGINT, onSignal);   // kill on Ctrl+C
         start_mjpeg_server();
-
-        // … your motor‑control + WebSocket loop here …
-        char condition = 'y';
-        do
-        {
-            std::cout << "MJPEG server running. Press 'n' to stop: ";
-            std::cin >> condition;
-        } while (condition != 'n' && condition != 'N');
-        
-        // On shutdown:
-        stop_mjpeg_server();
+        pause(); 
     } catch (const std::exception& e) {
         std::cerr << e.what() << '\n';
         return 1;

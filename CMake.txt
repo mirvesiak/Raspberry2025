@@ -6,18 +6,23 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -O2")
 
 # Find packages
 find_package(OpenCV REQUIRED)
-find_package(PkgConfig REQUIRED)
 
-# Add your source files
+# ---------- CivetWeb (embedded HTTP server) ----------
+add_library(civetweb STATIC external/civetweb/civetweb.c)
+target_include_directories(civetweb PUBLIC external/civetweb)
+# target_compile_definitions(civetweb PRIVATE -DNO_SSL)   # uncomment for HTTPS
+target_link_libraries(civetweb PUBLIC pthread)
+
+# ---------- Your executable ----------
 add_executable(Raspberry2025
     src/main.cpp
     src/camera_stream.cpp
 )
 
-# Tell CMake where to find headers & link libs
 target_include_directories(Raspberry2025 PRIVATE
-    include
+    include                       # your own headers
 )
 target_link_libraries(Raspberry2025
+    civetweb
     ${OpenCV_LIBS}
 )
