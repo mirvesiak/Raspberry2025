@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -O2")
 
 # Find packages
 find_package(OpenCV REQUIRED)
-find_package(CivetWeb REQUIRED)
+find_package(CivetWeb)
 
 # ---------- CivetWeb (embedded HTTP server) ----------
 #add_library(civetweb STATIC external/civetweb/src/civetweb.c)
@@ -24,6 +24,6 @@ target_include_directories(Raspberry2025 PRIVATE
     include                       # your own headers
 )
 target_link_libraries(Raspberry2025
-    civetweb
+    ${CIVETWEB_LIB}
     ${OpenCV_LIBS}
 )
