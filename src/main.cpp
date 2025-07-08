@@ -1,4 +1,4 @@
-#include "include/camera_stream.hpp"
+#include "camera_stream.hpp"
 #include <iostream>
 #include <signal.h>
 #include <unistd.h>
