@@ -10,7 +10,7 @@ find_package(OpenCV REQUIRED)
 # ---------- CivetWeb (embedded HTTP server) ----------
 add_library(civetweb STATIC external/civetweb/civetweb.c)
 target_include_directories(civetweb PUBLIC external/civetweb)
-# target_compile_definitions(civetweb PRIVATE -DNO_SSL)   # uncomment for HTTPS
+target_compile_definitions(civetweb PUBLIC NO_SSL)
 target_link_libraries(civetweb PUBLIC pthread)
 
 # ---------- Your executable ----------
