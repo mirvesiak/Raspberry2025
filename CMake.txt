@@ -7,22 +7,17 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -O2")
 # Find packages
 find_package(OpenCV REQUIRED)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(PIGPIO REQUIRED libpigpio)
 
 # Add your source files
-add_executable(rpi_robot
+add_executable(Raspberry2025
     src/main.cpp
-    src/motor_controller.cpp
-    src/camera_streamer.cpp
+    src/camera_stream.cpp
 )
 
 # Tell CMake where to find headers & link libs
-target_include_directories(rpi_robot PRIVATE
+target_include_directories(Raspberry2025 PRIVATE
     include
-    ${PIGPIO_INCLUDE_DIRS}
 )
-target_link_libraries(rpi_robot
+target_link_libraries(Raspberry2025
     ${OpenCV_LIBS}
-    ${PIGPIO_LIBRARIES}
-    uWS  pthread
 )
