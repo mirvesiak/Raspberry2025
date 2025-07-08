@@ -11,10 +11,11 @@ static std::atomic<bool> keep_running{true};
 
 static int wsConnect(const mg_connection*, void*) { return 0; }           // accept all
 
-static void wsMessage(mg_connection *conn, int, char *data,
+static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     auto msg = std::string_view{data, len};
     std::cout << "WebSocket message: " << std::string(msg) << std::endl;
+    return 1;  // 1 = keep connection open
 }
 
 static int streamHandler(struct mg_connection *conn, void * /*cbdata*/)
