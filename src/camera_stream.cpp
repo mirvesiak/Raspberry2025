@@ -9,10 +9,12 @@
 // ---- globals kept simple for a minimal demo ----
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
+static std::atomic<int> joystick_angle{0};
+static std::atomic<int> joystick_distance{0};
 
 static void translate_message(const std::string_view msg, int *angle, int *distance) {
     // Translate joystick message to float values
-    if (msg == "stop" || msg.empty()) {
+    if (msg.empty()) {
         *angle = 0.0f;
         *distance = 0.0f;
         return;
@@ -33,10 +35,10 @@ static int wsConnect(const mg_connection*, void*) { return 0; }           // acc
 static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     std::string_view msg = std::string_view{data, len};
-    std::cout << "WebSocket message: " << std::string(msg);
     int angle = 0.0f, distance = 0.0f;
     translate_message(msg, &angle, &distance);
-    std::cout << " -> " << angle << " " << distance << std::endl;
+    joystick_angle.store(angle, std::memory_order_relaxed);
+    joystick_distance.store(distance, std::memory_order_relaxed);
     return 1;  // 1 = keep connection open
 }
 
