@@ -17,9 +17,15 @@ static void translate_message(const std::string_view msg, float *angle, float *d
         *distance = 0.0f;
         return;
     }
+
     const auto pos = msg.find('#');
-    *angle = std::stof(std::string(msg.substr(0, pos)));        // angle
-    *distance = std::stof(std::string(msg.substr(pos + 1)));    // distance
+    try {
+        *angle = std::stof(std::string(msg.substr(0, pos)));
+        *distance = std::stof(std::string(msg.substr(pos + 1)));
+    } catch (const std::exception &e) {
+        std::cerr << "[error] Failed to parse message: " << msg
+                  << " " << e.what() << std::endl;
+    }
 }
 
 static int wsConnect(const mg_connection*, void*) { return 0; }           // accept all
