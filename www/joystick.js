@@ -14,11 +14,10 @@ const pad = nipplejs.create({
   size: 180
 });
 
-let lastDir = '';
 pad.on('move', (_, data) => {
   const {angle = {}, distance = 0} = data;
   if (distance < 15) send("0#0");
   else send(angle.degree + "#" + distance);
 });
 
-pad.on('end', () => { send('stop'); lastDir = ''; });
+pad.on('end', () => { send("0#0");});
