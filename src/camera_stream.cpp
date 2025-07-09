@@ -4,17 +4,34 @@
 #include <atomic>
 #include <thread>
 #include <vector>
+#include <string>
 
 // ---- globals kept simple for a minimal demo ----
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
+
+static float[2] translate_message(const std::string& msg) {
+    // Translate joystick message to float array
+    float values[2] = {0.0f, 0.0f};
+    signed int i = 0;
+    while (msg[i] != '#') {i++;}  // find separator
+    if (i > 0) {
+        values[0] = std::stof(msg.substr(0, i));  // angle
+        values[1] = std::stof(msg.substr(i + 1)); // distance
+    }
+    else {
+        values[0] = std::stof(msg);  // only angle
+    }
+    return values;
+}
 
 static int wsConnect(const mg_connection*, void*) { return 0; }           // accept all
 
 static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     auto msg = std::string_view{data, len};
-    std::cout << "WebSocket message: " << std::string(msg) << std::endl;
+    float values[2] = translate_message(msg);
+    std::cout << "WebSocket message: " << std::string(msg) << " -> " << values[0] << " " << values[1] << std::endl;
     return 1;  // 1 = keep connection open
 }
 
