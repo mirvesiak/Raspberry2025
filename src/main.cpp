@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <thread>
 #include <chrono>
+#include <atomic>
 
 static std::atomic<bool> shutdown{false};
 
@@ -14,8 +15,8 @@ void onSignal(int) {
 void motorLoop()
 {
     while (!shutdown.load(std::memory_order_relaxed)) {
-        float a = angle.load(std::memory_order_relaxed);
-        float d = distance.load(std::memory_order_relaxed);
+        int a = joystick_angle.load(std::memory_order_relaxed);
+        int d = joystick_distance.load(std::memory_order_relaxed);
 
         std::cout << "[motorLoop] angle=" << a
                   << "  dist=" << d << '\n';
