@@ -9,8 +9,8 @@
 // ---- globals kept simple for a minimal demo ----
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
-static std::atomic<int> joystick_angle{0};
-static std::atomic<int> joystick_distance{0};
+std::atomic<int> joystick_angle{0};
+std::atomic<int> joystick_distance{0};
 
 static void translate_message(const std::string_view msg, int *angle, int *distance) {
     // Translate joystick message to float values
