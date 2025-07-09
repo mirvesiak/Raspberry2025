@@ -12,7 +12,7 @@ static std::atomic<bool> keep_running{true};
 
 static void translate_message(const std::string_view msg, float *angle, float *distance) {
     // Translate joystick message to float values
-    if (msg.empty()) {
+    if (msg == "stop" || msg.empty()) {
         *angle = 0.0f;
         *distance = 0.0f;
         return;
