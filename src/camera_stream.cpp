@@ -10,14 +10,13 @@
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
 
-static void translate_message(const std::string& msg, std::float *angle, std::float *distance) {
+static void translate_message(const std::string& msg, float *angle, float *distance) {
     // Translate joystick message to float array
-    signed int i = 0;
-    while (msg[i] != '#') {i++;}  // find separator
+    const auto pos = msg.find('#');
 
     if (i > 0) {
-        *angle = std::stof(msg.substr(0, i));   // angle
-        *distance = std::stof(msg.substr(i + 1));    // distance
+        *angle = std::stof(msg.substr(0, pos));   // angle
+        *distance = std::stof(msg.substr(pos + 1));    // distance
     }
 
     return values;
