@@ -17,7 +17,7 @@ const pad = nipplejs.create({
 pad.on('move', (_, data) => {
   const {angle = {}, distance = 0} = data;
   if (distance < 30) send("0#0");
-  else send(angle.degree + "#" + distance);
+  else send(Math.floor(angle.degree) + "#" + Math.floor(distance));
 });
 
 pad.on('end', () => { send("0#0");});

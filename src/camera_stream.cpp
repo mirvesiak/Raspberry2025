@@ -10,7 +10,7 @@
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
 
-static void translate_message(const std::string_view msg, float *angle, float *distance) {
+static void translate_message(const std::string_view msg, int *angle, int *distance) {
     // Translate joystick message to float values
     if (msg == "stop" || msg.empty()) {
         *angle = 0.0f;
@@ -20,8 +20,8 @@ static void translate_message(const std::string_view msg, float *angle, float *d
 
     const auto pos = msg.find('#');
     try {
-        *angle = std::stof(std::string(msg.substr(0, pos)));
-        *distance = std::stof(std::string(msg.substr(pos + 1)));
+        *angle = std::stoi(std::string(msg.substr(0, pos)));
+        *distance = std::stoi(std::string(msg.substr(pos + 1)));
     } catch (const std::exception &e) {
         std::cerr << "[error] Failed to parse message: " << msg
                   << " " << e.what() << std::endl;
@@ -34,7 +34,7 @@ static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     std::string_view msg = std::string_view{data, len};
     std::cout << "WebSocket message: " << std::string(msg);
-    float angle = 0.0f, distance = 0.0f;
+    int angle = 0.0f, distance = 0.0f;
     translate_message(msg, &angle, &distance);
     std::cout << " -> " << angle << " " << distance << std::endl;
     return 1;  // 1 = keep connection open
