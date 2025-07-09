@@ -10,23 +10,18 @@
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
 
-static void translate_message(const std::string& msg, float *angle, float *distance) {
-    // Translate joystick message to float array
+static void translate_message(const std::string_view msg, float *angle, float *distance) {
+    // Translate joystick message to float values
     const auto pos = msg.find('#');
-
-    if (i > 0) {
-        *angle = std::stof(msg.substr(0, pos));   // angle
-        *distance = std::stof(msg.substr(pos + 1));    // distance
-    }
-
-    return values;
+    *angle = std::stof(msg.substr(0, pos));   // angle
+    *distance = std::stof(msg.substr(pos + 1));    // distance
 }
 
 static int wsConnect(const mg_connection*, void*) { return 0; }           // accept all
 
 static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
-    auto msg = std::string_view{data, len};
+    string_view msg = std::string_view{data, len};
     float angle = 0.0f, distance = 0.0f;
     translate_message(msg, &angle, &distance);
     std::cout << "WebSocket message: " << std::string(msg) << " -> " << angle << " " << distance << std::endl;
