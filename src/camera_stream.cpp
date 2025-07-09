@@ -12,6 +12,11 @@ static std::atomic<bool> keep_running{true};
 
 static void translate_message(const std::string_view msg, float *angle, float *distance) {
     // Translate joystick message to float values
+    if (msg.empty()) {
+        *angle = 0.0f;
+        *distance = 0.0f;
+        return;
+    }
     const auto pos = msg.find('#');
     *angle = std::stof(std::string(msg.substr(0, pos)));        // angle
     *distance = std::stof(std::string(msg.substr(pos + 1)));    // distance
