@@ -19,13 +19,6 @@ pad.on('move', (_, data) => {
   const {angle = {}, distance = 0} = data;
   if (distance < 15) send("0#0");
   else send(angle.degree + "#" + distance);
-  // const deg = angle.degree;
-  // const dir = (deg > 45 && deg <= 135)   ? 'forward'
-  //          : (deg > 135 && deg <= 225)  ? 'left'
-  //          : (deg > 225 && deg <= 315)  ? 'back'
-  //          :                              'right';
-
-  // if (dir !== lastDir) { send(dir); lastDir = dir; }
 });
 
 pad.on('end', () => { send('stop'); lastDir = ''; });

@@ -22,9 +22,10 @@ static int wsConnect(const mg_connection*, void*) { return 0; }           // acc
 static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     std::string_view msg = std::string_view{data, len};
+    std::cout << "WebSocket message: " << std::string(msg);
     float angle = 0.0f, distance = 0.0f;
     translate_message(msg, &angle, &distance);
-    std::cout << "WebSocket message: " << std::string(msg) << " -> " << angle << " " << distance << std::endl;
+    std::cout << " -> " << angle << " " << distance << std::endl;
     return 1;  // 1 = keep connection open
 }
 
