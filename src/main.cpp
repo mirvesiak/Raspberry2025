@@ -9,18 +9,18 @@
 #include <unistd.h>     // For close()
 #include <arpa/inet.h>  // For socket functions
 
-static std::atomic<bool> shutdown{false};
+static std::atomic<bool> go_shutdown{false};
 
 constexpr const char* EV3_IP = "10.42.0.3";
 constexpr int PORT = 1234;
 
 void onSignal(int) {
-    shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
+    go_shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
 }
 
 void motorLoop(int sockfd)
 {
-    while (!shutdown.load(std::memory_order_relaxed)) {
+    while (!go_shutdown.load(std::memory_order_relaxed)) {
         int a = joystick_angle.load(std::memory_order_relaxed);
         int d = joystick_distance.load(std::memory_order_relaxed);
         // send motor command
@@ -71,7 +71,7 @@ int main()
 
         std::thread motorThread(motorLoop);
         
-        while (!shutdown.load(std::memory_order_relaxed)) {
+        while (!go_shutdown.load(std::memory_order_relaxed)) {
             pause();
         }
 
