@@ -77,6 +77,10 @@ int main()
 
         stop_mjpeg_server();    // Stop the MJPEG server
         motorThread.join();     // Wait for the motor thread to finish
+
+        std::string message = "SHUTDOWN";
+        send(sockfd, message.c_str(), message.size(), 0);
+
         close(sockfd);          // Close the socket connection
         std::cout << "Shutdown complete.\n";
 
