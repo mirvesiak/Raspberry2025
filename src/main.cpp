@@ -24,7 +24,7 @@ void motorLoop(int sockfd)
         int a = joystick_angle.load(std::memory_order_relaxed);
         int d = joystick_distance.load(std::memory_order_relaxed);
         // send motor command
-        std::string message = "MOTOR " + std::to_string(a);
+        std::string message = "MOTOR " + std::to_string(a) + " " + std::to_string(d);
         send(sockfd, message.c_str(), message.size(), 0);
 
         // receive sensor reading
