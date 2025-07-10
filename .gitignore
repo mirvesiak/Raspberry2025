@@ -33,3 +33,6 @@
 
 # Build files
 build/*
+
+# EV3 files
+ev3/*

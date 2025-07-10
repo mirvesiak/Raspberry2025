@@ -17,9 +17,13 @@ void motorLoop()
     while (!shutdown.load(std::memory_order_relaxed)) {
         int a = joystick_angle.load(std::memory_order_relaxed);
         int d = joystick_distance.load(std::memory_order_relaxed);
+        // send motor command
+        socket.send(boost::asio::buffer("MOTOR A 75\n"));
 
-        std::cout << "[motorLoop] angle=" << a
-                  << "  dist=" << d << '\n';
+        // receive sensor reading
+        char buf[64];
+        size_t n = socket.read_some(boost::asio::buffer(buf));
+        std::cout << "EV3 says: " << std::string_view(buf, n);
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50)); // 20 Hz
     }
