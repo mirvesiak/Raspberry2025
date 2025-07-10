@@ -69,7 +69,7 @@ int main()
         signal(SIGINT, onSignal);   // kill on Ctrl+C
         start_mjpeg_server();
 
-        std::thread motorThread(motorLoop(sockfd));
+        std::thread motorThread(motorLoop, sockfd);
         
         while (!go_shutdown.load(std::memory_order_relaxed)) {
             pause();
