@@ -40,6 +40,18 @@ void motorLoop(int sockfd)
 
 int main()
 {
+    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 /home/robot/ev3_server.py > /dev/null 2>&1 &'";
+
+    std::cout << "Starting Python server on EV3...\n";
+    int result = system(ssh_command.c_str());
+
+    if (result != 0) {
+        std::cerr << "Failed to launch server on EV3\n";
+        return 1;
+    }
+
+    std::cout << "Python server launched.\n";
+
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) {
         perror("Socket creation failed");
