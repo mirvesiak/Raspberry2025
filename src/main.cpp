@@ -64,9 +64,9 @@ void motorLoop(int sockfd)
             std::cerr << "Failed to receive data from EV3\n";
             return;
         }
-        buf[n] = '\0';
-        if (strncmp(buf, "RDY", 3) == 0) break;
-        std::cout << "EV3: " << buf;
+        buffer[bytes] = '\0';
+        if (strncmp(buffer, "RDY", 3) == 0) break;
+        std::cout << "EV3: " << buffer;
     }
     std::cout << "EV3 is ready to receive commands. Starting the transmission.\n";
 
