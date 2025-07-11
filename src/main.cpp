@@ -57,17 +57,16 @@ int connect_to_ev3(const char* ip, int port) {
 
 void motorLoop(int sockfd)
 {
+    char buffer[128] = {0};
     while (true) {
-        char buffer[128] = {0};
         ssize_t bytes = recv(sockfd, buffer, sizeof(buffer)-1, 0);
         if (bytes <= 0) {
             std::cerr << "Failed to receive data from EV3\n";
             return;
         }
-        if (strncmp(buffer, "RDY\n", 3) == 0) {
-            break; // Exit loop when EV3 is ready
-        }
-        std::cout << "EV3: " << buffer;
+        buf[n] = '\0';
+        if (strncmp(buf, "RDY", 3) == 0) break;
+        std::cout << "EV3: " << buf;
     }
     std::cout << "EV3 is ready to receive commands. Starting the transmission.\n";
 
@@ -78,8 +77,6 @@ void motorLoop(int sockfd)
         std::string message = "MOTOR " + std::to_string(a) + " " + std::to_string(d);
         send(sockfd, message.c_str(), message.size(), 0);
 
-        // receive sensor reading
-        char buffer[128] = {0};
         ssize_t bytes = recv(sockfd, buffer, sizeof(buffer)-1, 0);
         if (bytes > 0 && buffer[0] != 'O' && buffer[1] != 'K') {
             std::cout << "!!! EV3: " << buffer;
@@ -100,6 +97,8 @@ int main()
         return 1;
     }
     std::cout << "Python server script started\n";
+    std::cout << "Waiting 5 seconds for EV3 to be ready...\n";
+    std::this_thread::sleep_for(std::chrono::seconds(5));  // Wait for the server to start
 
     // Connect to the EV3
     int sockfd = connect_to_ev3(EV3_IP, PORT);
