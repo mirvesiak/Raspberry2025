@@ -18,6 +18,26 @@ void onSignal(int) {
     go_shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
 }
 
+void print_raw(const char* data, size_t len) {
+    std::cout << "Raw message (" << len << " bytes):\n";
+    for (size_t i = 0; i < len; ++i) {
+        unsigned char c = data[i];
+
+        // Print hex
+        std::printf("%02X ", c);
+
+        // Optional: print printable characters to the right
+        if ((i + 1) % 16 == 0 || i == len - 1) {
+            std::cout << "  ";
+            for (size_t j = i - (i % 16); j <= i; ++j) {
+                char ch = data[j];
+                std::cout << (std::isprint(ch) ? ch : '.');
+            }
+            std::cout << "\n";
+        }
+    }
+}
+
 int connect_to_ev3(const char* ip, int port) {
     int sockfd;
     struct sockaddr_in serv_addr;
@@ -64,6 +84,7 @@ void motorLoop(int sockfd)
             std::cerr << "Failed to receive data from EV3\n";
             return;
         }
+        print_raw(buffer, bytes);
         buffer[bytes] = '\0';
         if (strncmp(buffer, "RDY", 3) == 0) break;
         std::cout << "EV3: " << buffer;
@@ -74,11 +95,11 @@ void motorLoop(int sockfd)
         int a = joystick_angle.load(std::memory_order_relaxed);
         int d = joystick_distance.load(std::memory_order_relaxed);
         // send motor command
-        std::string message = "MOTOR " + std::to_string(a) + " " + std::to_string(d);
+        std::string message = "MOTOR " + std::to_string(a) + " " + std::to_string(d) + "\n";
         send(sockfd, message.c_str(), message.size(), 0);
 
         ssize_t bytes = recv(sockfd, buffer, sizeof(buffer)-1, 0);
-        if (bytes > 0 && buffer[0] != 'O' && buffer[1] != 'K') {
+        if (bytes > 0 && !(buffer[0] == 'O' && buffer[1] == 'K')) {
             std::cout << "!!! EV3: " << buffer;
         }
 
