@@ -1,18 +1,19 @@
 #include "camera_stream.hpp"
+#include "SocketLineReader.hpp"
 #include <iostream>
 #include <signal.h>
-#include <unistd.h>
 #include <thread>
 #include <chrono>
 #include <atomic>
 #include <cstring>      // For memset()
-#include <unistd.h>     // For close()
+#include <unistd.h>
 #include <arpa/inet.h>  // For socket functions
 
 static std::atomic<bool> go_shutdown{false};
 
 constexpr const char* EV3_IP = "10.42.0.3";
 constexpr int PORT = 1234;
+
 
 void onSignal(int) {
     go_shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
@@ -77,19 +78,21 @@ int connect_to_ev3(const char* ip, int port) {
 
 void motorLoop(int sockfd)
 {
-    char buffer[128] = {0};
+    SocketLineReader reader(sockfd);
+    std::string line;
     while (true) {
-        ssize_t bytes = recv(sockfd, buffer, sizeof(buffer)-1, 0);
-        if (bytes <= 0) {
-            std::cerr << "Failed to receive data from EV3\n";
+        if (!reader.readLine(line)) {
+            std::cerr << "Read error.\n";
             return;
         }
-        print_raw(buffer, bytes);
-        buffer[bytes] = '\0';
-        if (strncmp(buffer, "RDY", 3) == 0) break;
-        std::cout << "EV3: " << buffer;
+
+        if (line == "RDY") {
+            std::cout << "EV3 is ready to receive commands. Starting the transmission.\n";
+            break;
+        } else {
+            std::cout << "EV3: " << line << "\n";
+        }
     }
-    std::cout << "EV3 is ready to receive commands. Starting the transmission.\n";
 
     while (!go_shutdown.load(std::memory_order_relaxed)) {
         int a = joystick_angle.load(std::memory_order_relaxed);
@@ -97,10 +100,14 @@ void motorLoop(int sockfd)
         // send motor command
         std::string message = "MOTOR " + std::to_string(a) + " " + std::to_string(d) + "\n";
         send(sockfd, message.c_str(), message.size(), 0);
+        
+        if (!reader.readLine(line)) {
+            std::cerr << "Read error.\n";
+            return;
+        }
 
-        ssize_t bytes = recv(sockfd, buffer, sizeof(buffer)-1, 0);
-        if (bytes > 0 && !(buffer[0] == 'O' && buffer[1] == 'K')) {
-            std::cout << "!!! EV3: " << buffer;
+        if (strncmp(line.c_str(), "OK", 2) != 0) {
+            std::cout << "EV3: " << line << "\n";
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50)); // 20 Hz
@@ -144,7 +151,7 @@ int main()
         std::string message = "SHUTDOWN";
         send(sockfd, message.c_str(), message.size(), 0);
 
-        close(sockfd);          // Close the socket connection
+        shutdown(sockfd, SHUT_RDWR);  // Optional but cleaner
         std::cout << "Shutdown complete.\n";
 
     } catch (const std::exception& e) {
