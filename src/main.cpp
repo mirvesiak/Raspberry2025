@@ -45,8 +45,8 @@ int connect_to_ev3(const char* ip, int port) {
         close(sockfd);
         std::cerr << "Connection attempt " << ++retry_count << " , retrying...\n";
         
-        if (retry_count >= 5) {
-            std::cerr << "Failed to connect to EV3 after 5 attempts\n";
+        if (retry_count >= 7) {
+            std::cerr << "Failed to connect to EV3 after 7 attempts\n";
             return -1;
         }
         std::this_thread::sleep_for(std::chrono::seconds(2));  // Retry every second
@@ -64,7 +64,7 @@ void motorLoop(int sockfd)
             std::cerr << "Failed to receive data from EV3\n";
             return;
         }
-        if (strncmp(buffer, "RDY", 3) == 0) {
+        if (strncmp(buffer, "RDY\n", 3) == 0) {
             break; // Exit loop when EV3 is ready
         }
         std::cout << "EV3: " << buffer;
