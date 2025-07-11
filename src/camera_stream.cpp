@@ -15,8 +15,8 @@ std::atomic<int> joystick_distance{0};
 static void translate_message(const std::string_view msg, int *angle, int *distance) {
     // Translate joystick message to float values
     if (msg.empty()) {
-        *angle = 0.0f;
-        *distance = 0.0f;
+        *angle = 0;
+        *distance = 0;
         return;
     }
 
@@ -35,7 +35,8 @@ static int wsConnect(const mg_connection*, void*) { return 0; }           // acc
 static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     std::string_view msg = std::string_view{data, len};
-    int angle = 0.0f, distance = 0.0f;
+    int angle = 0;
+    int distance = 0;
     translate_message(msg, &angle, &distance);
     joystick_angle.store(angle, std::memory_order_relaxed);
     joystick_distance.store(distance, std::memory_order_relaxed);
