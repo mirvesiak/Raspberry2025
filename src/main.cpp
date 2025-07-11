@@ -20,6 +20,20 @@ void onSignal(int) {
 
 void motorLoop(int sockfd)
 {
+    while (true) {
+        char buffer[128] = {0};
+        ssize_t bytes = recv(sockfd, buffer, sizeof(buffer)-1, 0);
+        if (bytes <= 0) {
+            std::cerr << "Failed to receive data from EV3\n";
+            return;
+        }
+        if (strncmp(buffer, "RDY", 3) == 0) {
+            break; // Exit loop when EV3 is ready
+        }
+        std::cout << "EV3: " << buffer;
+    }
+    std::cout << "EV3 is ready to receive commands. Starting the transmission.\n";
+
     while (!go_shutdown.load(std::memory_order_relaxed)) {
         int a = joystick_angle.load(std::memory_order_relaxed);
         int d = joystick_distance.load(std::memory_order_relaxed);
@@ -30,8 +44,8 @@ void motorLoop(int sockfd)
         // receive sensor reading
         char buffer[128] = {0};
         ssize_t bytes = recv(sockfd, buffer, sizeof(buffer)-1, 0);
-        if (bytes > 0) {
-            std::cout << "EV3 response: " << buffer;
+        if (bytes > 0 && buffer[0] != 'O' && buffer[1] != 'K') {
+            std::cout << "!!! EV3: " << buffer;
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50)); // 20 Hz
