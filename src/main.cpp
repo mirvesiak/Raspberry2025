@@ -49,7 +49,7 @@ int connect_to_ev3(const char* ip, int port) {
             std::cerr << "Failed to connect to EV3 after 5 attempts\n";
             return -1;
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));  // Retry every second
+        std::this_thread::sleep_for(std::chrono::seconds(2));  // Retry every second
     }
 
     return sockfd;
@@ -106,7 +106,6 @@ int main()
     if (sockfd < 0) {
         return 1;  // Connection failed
     }
-    std::cout << "Connected to EV3!\n";
 
     // Start the main loop and MJPEG server
     try {
