@@ -18,6 +18,43 @@ void onSignal(int) {
     go_shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
 }
 
+int connect_to_ev3(const char* ip, int port) {
+    int sockfd;
+    struct sockaddr_in serv_addr;
+    
+    int retry_count = 0;
+
+    while (true) {
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd < 0) {
+            std::cerr << "Socket creation failed\n";
+            return -1;
+        }
+
+        std::memset(&serv_addr, 0, sizeof(serv_addr));
+        serv_addr.sin_family = AF_INET;
+        serv_addr.sin_port = htons(port);
+        inet_pton(AF_INET, ip, &serv_addr.sin_addr);
+
+        std::cout << "Trying to connect to EV3...\n";
+        if (connect(sockfd, (struct sockaddr*)&serv_addr, sizeof(serv_addr)) == 0) {
+            std::cout << "Connected to EV3!\n";
+            break;
+        }
+
+        close(sockfd);
+        std::cerr << "Connection attempt " << ++retry_count << " , retrying...\n";
+        
+        if (retry_count >= 5) {
+            std::cerr << "Failed to connect to EV3 after 5 attempts\n";
+            return -1;
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(1));  // Retry every second
+    }
+
+    return sockfd;
+}
+
 void motorLoop(int sockfd)
 {
     while (true) {
@@ -54,43 +91,24 @@ void motorLoop(int sockfd)
 
 int main()
 {
+    // Start the Python server on the EV3
     std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 /home/robot/motor_controll.py > /dev/null 2>&1 &'";
-
     std::cout << "Starting Python server on EV3...\n";
     int result = system(ssh_command.c_str());
-
     if (result != 0) {
         std::cerr << "Failed to launch server on EV3\n";
         return 1;
     }
+    std::cout << "Python server script started\n";
 
-    std::cout << "Python server launched.\n";
-
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    // Connect to the EV3
+    int sockfd = connect_to_ev3(EV3_IP, PORT);
     if (sockfd < 0) {
-        perror("Socket creation failed");
-        return 1;
+        return 1;  // Connection failed
     }
-
-    sockaddr_in serv_addr;
-    std::memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-
-    if (inet_pton(AF_INET, EV3_IP, &serv_addr.sin_addr) <= 0) {
-        std::cerr << "Invalid address/ Address not supported\n";
-        return 1;
-    }
-
-    std::cout << "Connecting to EV3 at " << EV3_IP << ":" << PORT << "...\n";
-    if (connect(sockfd, (sockaddr*)&serv_addr, sizeof(serv_addr)) < 0) {
-        perror("Connection failed");
-        return 1;
-    }
-
     std::cout << "Connected to EV3!\n";
 
-
+    // Start the main loop and MJPEG server
     try {
         signal(SIGINT, onSignal);   // kill on Ctrl+C
         start_mjpeg_server();
