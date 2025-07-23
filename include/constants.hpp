@@ -1,8 +1,11 @@
 #pragma once
 
 namespace Constants {
+    constexpr int control_loop_ms = 100; // Control loop interval in milliseconds
+    constexpr int control_loop_hz = 1000 / control_loop_ms; // Control loop frequency in Hz
+
     // Movement constants
-    constexpr double SENSITIVITY = 0.00055;
+    constexpr double SENSITIVITY = 0.01 / control_loop_hz; // Sensitivity for joystick movement (multiplied by joystick distance (0-100))
     constexpr double deadzone_x_left = -7.7;
     constexpr double deadzone_x_right = 7.3;
     constexpr double deadzone_y_top = 7.0;

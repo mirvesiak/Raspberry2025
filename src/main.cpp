@@ -225,7 +225,7 @@ void motorLoop(int sockfd)
 
         auto loop_end = std::chrono::steady_clock::now();
         auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(loop_end - loop_start);
-        auto sleep_duration = std::chrono::milliseconds(50) - iteration_duration;
+        auto sleep_duration = std::chrono::milliseconds(control_loop_ms) - iteration_duration;
 
         if (sleep_duration > std::chrono::milliseconds(0)) {
             std::this_thread::sleep_for(sleep_duration);
