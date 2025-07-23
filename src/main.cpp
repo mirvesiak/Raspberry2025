@@ -9,6 +9,7 @@
 #include <cstring>      // For memset()
 #include <unistd.h>
 #include <arpa/inet.h>  // For socket functions
+#include <cmath>
 
 static std::atomic<bool> go_shutdown{false};
 
