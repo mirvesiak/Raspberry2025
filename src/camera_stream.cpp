@@ -102,7 +102,7 @@ static int streamHandler(struct mg_connection *conn, void * /*cbdata*/)
     return 0;  // close connection
 }
 
-void start_mjpeg_server(bool steam)
+void start_mjpeg_server(bool stream)
 {
     if (stream) {
         // Open camera
