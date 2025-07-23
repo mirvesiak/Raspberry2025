@@ -163,7 +163,7 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
     // Resolve collision with deadzone
-    // resolvePointAABBCollision(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_bottom);
+    resolvePointAABBCollision(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_bottom);
     x = new_x;
     y = new_y;
 }
@@ -224,15 +224,17 @@ void motorLoop(int sockfd)
             outB = clampAngle(outB, J2_limit, reachable);
 
             // Fix the target coordinates
-            // if (!reachable)
-            //     kSolver.calculateFK(x, y, outA, outB);
+            if (!reachable)
+                kSolver.calculateFK(x, y, outA, outB);
             // send motor command
             char buffer[50];
             std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
             std::string message(buffer);
             // std::cout << "Sending command: " << message;
             send(sockfd, message.c_str(), message.size(), 0);
-            std::cout<<"----------------END OF LOOP----------------\n";
+
+            auto calculation_duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - loop_start);
+            std::cout << "Control loop iteration took " << calculation_duration.count() << " ms\n";
         }
 
         if (!reader.readLine(line)) {
