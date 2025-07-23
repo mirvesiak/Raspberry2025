@@ -115,28 +115,32 @@ int connect_to_ev3(const char* ip, int port) {
 }
 
 void resolvePointAABBCollision(double oldX, double oldY, double& newX, double& newY, double left, double top, double right, double bottom) {
-    // If point is not inside the AABB, return early
+    // Check if point is inside the deadzone
     if (newX <= left || newX >= right || newY <= top || newY >= bottom)
-        return;
+        return; // Already outside — no action needed
 
-    // Compute movement delta
     double dx = newX - oldX;
     double dy = newY - oldY;
 
-    // Time to collide with each side (if moving)
-    double tx = (dx > 0) ? (left - oldX) / dx :
-               (dx < 0) ? (right - oldX) / dx : -INFINITY;
+    // Calculate distances to nearest edges
+    double toLeft   = std::abs(newX - left);
+    double toRight  = std::abs(newX - right);
+    double toTop    = std::abs(newY - top);
+    double toBottom = std::abs(newY - bottom);
 
-    double ty = (dy > 0) ? (top - oldY) / dy :
-               (dy < 0) ? (bottom - oldY) / dy : -INFINITY;
-
-    // Choose the axis with the earlier collision
-    if (std::abs(tx) > std::abs(ty)) {
-        newX = oldX + dx;  // Keep X
-        newY = (dy > 0) ? top : bottom;  // Snap Y to edge
+    // Choose axis of least penetration (least movement needed to escape)
+    if (std::abs(dx) > std::abs(dy)) {
+        // Horizontal movement dominates
+        if (dx > 0)
+            newX = left;   // Moved right - push to left edge
+        else
+            newX = right;  // Moved left - push to right edge
     } else {
-        newY = oldY + dy;  // Keep Y
-        newX = (dx > 0) ? left : right;  // Snap X to edge
+        // Vertical movement dominates
+        if (dy > 0)
+            newY = top;    // Moved down - push to top edge
+        else
+            newY = bottom; // Moved up - push to bottom edge
     }
 }
 
@@ -159,19 +163,10 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
     std::cout << "(" << x << ", " << y << ") -> (" << new_x << ", " << new_y << ")\n";
-    // Apply deadzone
-    if (new_x < deadzone_x_left || new_x > deadzone_x_right || new_y < deadzone_y_bottom || new_y > deadzone_y_top) {
-        // If outside deadzone, update coordinates
-        x = new_x;
-        y = new_y;
-    } else {
-        // If inside deadzone, clamp to the intersected deadzone edge
-        resolvePointAABBCollision(
-            x, y, new_x, new_y,
-            deadzone_x_left, deadzone_y_top,
-            deadzone_x_right, deadzone_y_bottom
-        );
-    }
+    // Resolve collision with deadzone
+    resolvePointAABBCollision(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_bottom);
+    x = new_x;
+    y = new_y;
 }
 
 void setup_joystick_translation(int angle, std::string & message) {
@@ -201,22 +196,6 @@ void motorLoop(int sockfd)
     double outA = 0.0; // Joint 1 angle
     double outB = 0.0; // Joint 2 angle
 
-    // while (!go_shutdown.load(std::memory_order_relaxed)) {
-    //     int a = joystick_angle.load(std::memory_order_relaxed);
-    //     std::string message;
-    //     setup_joystick_translation(a, message);
-    //     send(sockfd, message.c_str(), message.size(), 0);
-
-    //     if (!reader.readLine(line)) {
-    //         std::cerr << "Read error.\n";
-    //         return;
-    //     }
-
-    //     if (strncmp(line.c_str(), "OK", 2) != 0) {
-    //         std::cout << "EV3: " << line << "\n";
-    //     }
-    // }
-
     // Motor control loop
     bool last_isGrabbing = isGrabbing.load(std::memory_order_relaxed);
     while (!go_shutdown.load(std::memory_order_relaxed)) {
@@ -241,10 +220,12 @@ void motorLoop(int sockfd)
             outA = outA * 180.0 / PI;
             outB = outB * 180.0 / PI;
 
+            std::cout << "Angles: A=" << outA << ", B=" << outB << "\n";
             // Clamp angles to limits
             outA = clampAngle(outA, J1_limit, reachable);
             outB = clampAngle(outB, J2_limit, reachable);
-
+            std::cout << "Clamped Angles: A=" << outA << ", B=" << outB << "\n";
+            
             // Fix the target coordinates
             if (!reachable)
                 kSolver.calculateFK(x, y, outA, outB);
