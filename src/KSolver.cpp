@@ -34,6 +34,8 @@ bool KSolver::calculateIK(double target_X, double target_Y, double& out_A, doubl
 }
 
 void KSolver::calculateFK(double& target_X, double& target_Y, double out_A, double out_B) {
+    out_A = out_A * PI / 180.0; // Convert to radians
+    out_B = out_B * PI / 180.0; // Convert to radians
     target_X = this->L1 * std::sin(out_A) + this->d2 * std::sin(out_A + out_B + this->beta2);
     target_Y = this->L1 * std::cos(out_A) + this->d2 * std::cos(out_A + out_B + this->beta2);
 }
