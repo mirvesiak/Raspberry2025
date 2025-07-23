@@ -162,9 +162,8 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     // Convert joystick angle and distance to coordinates
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
-    std::cout << "(" << x << ", " << y << ") -> (" << new_x << ", " << new_y << ")\n";
     // Resolve collision with deadzone
-    resolvePointAABBCollision(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_bottom);
+    // resolvePointAABBCollision(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_bottom);
     x = new_x;
     y = new_y;
 }
@@ -220,16 +219,13 @@ void motorLoop(int sockfd)
             outA = outA * 180.0 / PI;
             outB = outB * 180.0 / PI;
 
-            std::cout << "Angles: A=" << outA << ", B=" << outB << "\n";
             // Clamp angles to limits
             outA = clampAngle(outA, J1_limit, reachable);
             outB = clampAngle(outB, J2_limit, reachable);
-            std::cout << "Clamped Angles: A=" << outA << ", B=" << outB << "\n";
 
             // Fix the target coordinates
-            if (!reachable)
-                kSolver.calculateFK(x, y, outA, outB);
-            std::cout << "Target Coordinates: (" << x << ", " << y << ")\n";
+            // if (!reachable)
+            //     kSolver.calculateFK(x, y, outA, outB);
             // send motor command
             char buffer[50];
             std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
