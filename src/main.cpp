@@ -31,6 +31,7 @@ constexpr double J2_limit = 90.0; // Joint 2 limit in degrees
 // EV3 connection constants
 constexpr const char* EV3_IP = "10.42.0.3";
 constexpr int PORT = 1234;
+constexpr std::string EV3_SCRIPT = "arm_test.py";
 
 void onSignal(int) {
     go_shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
@@ -56,19 +57,22 @@ void print_raw(const char* data, size_t len) {
     }
 }
 
-void start_ev3_script() {
-    std::string ev3_script = "arm_test.py";
+bool start_ev3_script() {    
     // Start the Python script on the EV3
-    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 " + ev3_script + " > /dev/null 2>&1 &'";
+    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 " + EV3_SCRIPT + " > /dev/null 2>&1 &'";
+    
     std::cout << "Starting Python script on EV3...\n";
     int result = system(ssh_command.c_str());
     if (result != 0) {
         std::cerr << "Failed to launch script on EV3\n";
-        return 1;
+        return false;
     }
+    
     std::cout << "Python script started\n";
     std::cout << "Waiting 5 seconds for EV3 to be ready...\n";
     std::this_thread::sleep_for(std::chrono::seconds(5));  // Wait for the server to start
+    
+    return true;
 }
 
 int connect_to_ev3(const char* ip, int port) {
@@ -162,10 +166,10 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
         y = new_y;
     } else {
         // If inside deadzone, clamp to the nearest deadzone edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_top, x, y)) break; // Top edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_top, deadzone_x_right, deadzone_y_bottom, x, y)) break; // Right edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_bottom, deadzone_x_left, deadzone_y_bottom, x, y)) break; // Bottom edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_bottom, deadzone_x_left, deadzone_y_top, x, y)) break; // Left edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_top, x, y)) return; // Top edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_top, deadzone_x_right, deadzone_y_bottom, x, y)) return; // Right edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_bottom, deadzone_x_left, deadzone_y_bottom, x, y)) return; // Bottom edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_bottom, deadzone_x_left, deadzone_y_top, x, y)) return; // Left edge
     }
 }
 
