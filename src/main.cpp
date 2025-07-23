@@ -1,3 +1,4 @@
+#include "constants.hpp"
 #include "camera_stream.hpp"
 #include "SocketLineReader.hpp"
 #include "KSolver.hpp"
@@ -13,25 +14,6 @@
 #include <cstdio>
 
 static std::atomic<bool> go_shutdown{false};
-
-// Movement constants
-constexpr double SENSITIVITY = 0.00055f; // Sensitivity for joystick input (1cm/s)
-constexpr double deadzone_x_left = -7.7; // Deadzone for x-axis
-constexpr double deadzone_x_right = 7.3; // Deadzone for distance
-constexpr double deadzone_y_top = 7.0; // Deadzone for y-axis
-constexpr double deadzone_y_bottom = -12.5; // Deadzone for y-axis
-
-// IK Solver constants
-constexpr double L1 = 11.3; // Length of the first link
-constexpr double L2 = 6.8; // Length of the second link
-constexpr double offset = 6.0; //Offset of the EE
-constexpr double J1_limit = 150.0; // Joint 1 limit in degrees
-constexpr double J2_limit = 90.0; // Joint 2 limit in degrees
-
-// EV3 connection constants
-constexpr const char* EV3_IP = "10.42.0.3";
-constexpr int PORT = 1234;
-constexpr std::string EV3_SCRIPT = "arm_test.py";
 
 void onSignal(int) {
     go_shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
@@ -59,7 +41,7 @@ void print_raw(const char* data, size_t len) {
 
 bool start_ev3_script() {    
     // Start the Python script on the EV3
-    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 " + EV3_SCRIPT + " > /dev/null 2>&1 &'";
+    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 " + Constants::EV3_SCRIPT + " > /dev/null 2>&1 &'";
     
     std::cout << "Starting Python script on EV3...\n";
     int result = system(ssh_command.c_str());
@@ -156,6 +138,9 @@ float clampAngle(float angle, float limit, bool& reachable) {
 }
 
 void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
+    using namespace Constants;
+    
+    // Convert joystick angle and distance to coordinates
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
     std::cout << "(" << x << ", " << y << ") -> (" << new_x << ", " << new_y << ")\n";
@@ -165,7 +150,7 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
         x = new_x;
         y = new_y;
     } else {
-        // If inside deadzone, clamp to the nearest deadzone edge
+        // If inside deadzone, clamp to the intersected deadzone edge
         if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_top, x, y)) return; // Top edge
         if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_top, deadzone_x_right, deadzone_y_bottom, x, y)) return; // Right edge
         if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_bottom, deadzone_x_left, deadzone_y_bottom, x, y)) return; // Bottom edge
@@ -175,6 +160,7 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
 
 void motorLoop(int sockfd)
 {
+    using namespace Constants;
     SocketLineReader reader(sockfd);
     std::string line;
 
@@ -239,9 +225,9 @@ int main()
 {
     // Start the EV3 script, if it fails, exit
     if (!start_ev3_script()) return 1;
-    
+
     // Connect to the EV3
-    int sockfd = connect_to_ev3(EV3_IP, PORT);
+    int sockfd = connect_to_ev3(Constants::EV3_IP, Constants::PORT);
     if (sockfd < 0) {
         return 1;  // Connection failed
     }

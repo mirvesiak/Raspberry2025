@@ -1,7 +1,6 @@
-#ifndef KSOLVER_HPP
-#define KSOLVER_HPP
+#pragma once
 
-#define PI 3.14159265358979323846
+constexpr double PI = 3.141592;
 
 class KSolver {
     double L1;
@@ -19,5 +18,3 @@ public:
     bool calculateIK(double targetX, double targetY, double& outA, double& outB);
     void calculateFK(double& targetX, double& targetY, double outA, double outB);
 };
-
-#endif // IKSOLVER_HPP
