@@ -18,5 +18,7 @@ namespace Constants {
     // EV3 connection constants
     constexpr const char* EV3_IP = "10.42.0.3";
     constexpr int PORT = 1234;
+    constexpr const char* EV3_SSH_P1 = "ssh robot@10.42.0.3 'nohup python3 ";
+    constexpr const char* EV3_SSH_P2 = " > /dev/null 2>&1 &'";
     constexpr const char* EV3_SCRIPT = "arm_test.py";
 }

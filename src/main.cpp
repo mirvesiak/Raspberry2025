@@ -40,8 +40,10 @@ void print_raw(const char* data, size_t len) {
 }
 
 bool start_ev3_script() {    
+    using namespace Constants;
+
     // Start the Python script on the EV3
-    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 " + Constants::EV3_SCRIPT + " > /dev/null 2>&1 &'";
+    std::string ssh_command = std::string(EV3_SSH_P1) + EV3_SCRIPT + EV3_SSH_P2;
     
     std::cout << "Starting Python script on EV3...\n";
     int result = system(ssh_command.c_str());
@@ -85,7 +87,7 @@ int connect_to_ev3(const char* ip, int port) {
         std::cerr << "Connection attempt " << ++retry_count << " , retrying...\n";
         
         if (retry_count >= 7) {
-            std::cerr << "Failed to connect to EV3 after 7 attempts\n";
+            std::cerr << "Failed to connect to EV3 after 7 attempts.\n";
             return -1;
         }
         std::this_thread::sleep_for(std::chrono::seconds(2));  // Retry every second
@@ -97,7 +99,8 @@ int connect_to_ev3(const char* ip, int port) {
     while (true) {
         if (!reader.readLine(line)) {
             std::cerr << "Read error.\n";
-            return;
+            std::cerr << "Failed to initialize EV3 script.\n";
+            return -1;
         }
 
         if (line == "RDY") {
@@ -139,7 +142,7 @@ float clampAngle(float angle, float limit, bool& reachable) {
 
 void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     using namespace Constants;
-    
+
     // Convert joystick angle and distance to coordinates
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
