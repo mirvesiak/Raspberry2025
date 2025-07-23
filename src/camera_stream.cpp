@@ -40,15 +40,15 @@ static int wsMessage(mg_connection *conn, int, char *data,
     msg.remove_prefix(1);           // Remove it before the switch
     switch (prefix)                 // switch on first char
     {
-    case 'M':  // Joystick message
+    case 'M': { // Joystick message
         int angle = 0;
         int distance = 0;
         translate_message(msg, &angle, &distance);
         joystick_angle.store(angle, std::memory_order_relaxed);
         joystick_distance.store(distance, std::memory_order_relaxed);
         break;
-
-    case 'G':  // Switch message
+    }
+    case 'G': { // Switch message
         if (msg == "1") {
             isGrabbing.store(true, std::memory_order_relaxed);
         } else if (msg == "0") {
@@ -57,7 +57,7 @@ static int wsMessage(mg_connection *conn, int, char *data,
             std::cerr << "[error] Invalid switch message: " << msg << std::endl;
         }
         break;
-    
+    }
     default:
         std::cerr << "[warn] Unrecognized message prefix: " << prefix << ", msg: " << msg << std::endl;
         break;
