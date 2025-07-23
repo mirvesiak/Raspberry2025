@@ -108,7 +108,7 @@ void lineLine(double x1, double y1, double x2, double y2, double x3, double y3, 
 void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
-    sdt::cout << "(" << x << ", " << y << ") -> (" << new_x << ", " << new_y << ")\n";
+    std::cout << "(" << x << ", " << y << ") -> (" << new_x << ", " << new_y << ")\n";
     // Apply deadzone
     if ((new_x < deadzone_x_left || new_x > deadzone_x_right) && (new_y < deadzone_y_bottom || new_y > deadzone_y_top)) {
         // If outside deadzone, update coordinates
