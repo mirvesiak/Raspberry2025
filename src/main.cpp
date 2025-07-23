@@ -237,7 +237,9 @@ void motorLoop(int sockfd)
 
 int main()
 {
-    start_ev3_script();
+    // Start the EV3 script, if it fails, exit
+    if (!start_ev3_script()) return 1;
+    
     // Connect to the EV3
     int sockfd = connect_to_ev3(EV3_IP, PORT);
     if (sockfd < 0) {
