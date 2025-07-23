@@ -13,6 +13,7 @@ add_executable(Raspberry2025
     src/main.cpp
     src/camera_stream.cpp
     src/SocketLineReader.cpp
+    src/KSolver.cpp
 )
 
 target_include_directories(Raspberry2025 PRIVATE
