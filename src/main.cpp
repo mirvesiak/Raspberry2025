@@ -114,18 +114,30 @@ int connect_to_ev3(const char* ip, int port) {
     return sockfd;
 }
 
-bool lineLine(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersectionX, double &intersectionY) {
-    // calculate the distance to intersection point
-    double uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-    double uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+void resolvePointAABBCollision(float oldX, float oldY, float& newX, float& newY, float left, float top, float right, float bottom) {
+    // If point is not inside the AABB, return early
+    if (newX <= left || newX >= right || newY <= top || newY >= bottom)
+        return;
 
-    // if uA and uB are between 0-1, lines are colliding
-    if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
-        intersectionX = x1 + (uA * (x2-x1));
-        intersectionY = y1 + (uA * (y2-y1));
-        return true; // Lines intersect
+    // Compute movement delta
+    float dx = newX - oldX;
+    float dy = newY - oldY;
+
+    // Time to collide with each side (if moving)
+    float tx = (dx > 0) ? (left - oldX) / dx :
+               (dx < 0) ? (right - oldX) / dx : -INFINITY;
+
+    float ty = (dy > 0) ? (top - oldY) / dy :
+               (dy < 0) ? (bottom - oldY) / dy : -INFINITY;
+
+    // Choose the axis with the earlier collision
+    if (std::abs(tx) > std::abs(ty)) {
+        newX = oldX + dx;  // Keep X
+        newY = (dy > 0) ? top : bottom;  // Snap Y to edge
+    } else {
+        newY = oldY + dy;  // Keep Y
+        newX = (dx > 0) ? left : right;  // Snap X to edge
     }
-    return false; // Lines do not intersect
 }
 
 float clampAngle(float angle, float limit, bool& reachable) {
@@ -154,10 +166,25 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
         y = new_y;
     } else {
         // If inside deadzone, clamp to the intersected deadzone edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_top, x, y)) return; // Top edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_top, deadzone_x_right, deadzone_y_bottom, x, y)) return; // Right edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_bottom, deadzone_x_left, deadzone_y_bottom, x, y)) return; // Bottom edge
-        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_bottom, deadzone_x_left, deadzone_y_top, x, y)) return; // Left edge
+        resolvePointAABBCollision(
+            x, y, new_x, new_y,
+            deadzone_x_left, deadzone_y_top,
+            deadzone_x_right, deadzone_y_bottom
+        );
+    }
+}
+
+void setup_joystick_translation(int angle, std::string & message) {
+    if (angle < 45) {
+        message = "M LEFT\n";
+    } else if (angle < 135) {
+        message = "M UP\n";
+    } else if (angle < 225) {
+        message = "M RIGHT\n";
+    } else if (angle < 315) {
+        message = "M DOWN\n";
+    } else {
+        message = "M LEFT\n";
     }
 }
 
@@ -173,6 +200,22 @@ void motorLoop(int sockfd)
     double y = 18.1; // Initial y coordinate
     double outA = 0.0; // Joint 1 angle
     double outB = 0.0; // Joint 2 angle
+
+    // while (!go_shutdown.load(std::memory_order_relaxed)) {
+    //     int a = joystick_angle.load(std::memory_order_relaxed);
+    //     std::string message;
+    //     setup_joystick_translation(a, message);
+    //     send(sockfd, message.c_str(), message.size(), 0);
+
+    //     if (!reader.readLine(line)) {
+    //         std::cerr << "Read error.\n";
+    //         return;
+    //     }
+
+    //     if (strncmp(line.c_str(), "OK", 2) != 0) {
+    //         std::cout << "EV3: " << line << "\n";
+    //     }
+    // }
 
     // Motor control loop
     bool last_isGrabbing = isGrabbing.load(std::memory_order_relaxed);
@@ -199,7 +242,7 @@ void motorLoop(int sockfd)
             outB = outB * 180.0 / PI;
 
             // Clamp angles to limits
-            outA = clampAngle(outA, J1_limit, reachable);
+            outA = clampAngle(outA, J1_limit, reachable);0
             outB = clampAngle(outB, J2_limit, reachable);
 
             // Fix the target coordinates
