@@ -200,7 +200,7 @@ void motorLoop(int sockfd)
 int main()
 {
     // Start the Python server on the EV3
-    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 /home/robot/motor_controll.py > /dev/null 2>&1 &'";
+    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 /home/robot/arm_test.py > /dev/null 2>&1 &'";
     std::cout << "Starting Python server on EV3...\n";
     int result = system(ssh_command.c_str());
     if (result != 0) {
