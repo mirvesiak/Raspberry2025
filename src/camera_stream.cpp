@@ -102,15 +102,16 @@ static int streamHandler(struct mg_connection *conn, void * /*cbdata*/)
     return 0;  // close connection
 }
 
-void start_mjpeg_server()
+void start_mjpeg_server(bool steam)
 {
-    // Open camera (PiCam or USB cam). Try 1280×720; fallback if not supported.
-    cam.open("/dev/video0", cv::CAP_V4L2);
-    if(!cam.isOpened()) { throw std::runtime_error("Camera open failed"); }
-    cam.set(cv::CAP_PROP_FRAME_WIDTH,  1280);
-    cam.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
-    cam.set(cv::CAP_PROP_FPS, 30);
-
+    if (stream) {
+        // Open camera
+        cam.open("/dev/video0", cv::CAP_V4L2);
+        if(!cam.isOpened()) { throw std::runtime_error("Camera open failed"); }
+        cam.set(cv::CAP_PROP_FRAME_WIDTH,  1280);
+        cam.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
+        cam.set(cv::CAP_PROP_FPS, 30);
+    }
     // CivetWeb config
     const char *options[] = {
         "listening_ports", "8080",
@@ -123,9 +124,11 @@ void start_mjpeg_server()
     struct mg_context *ctx = mg_start(&callbacks, nullptr, options);
 
     // Register the /stream endpoint
-    mg_set_request_handler(ctx, "/stream", streamHandler, nullptr);
+    if (stream) {
+        mg_set_request_handler(ctx, "/stream", streamHandler, nullptr);
+        std::puts("MJPEG stream running on http://raspberrypi.local:8080/stream");
+    }
     mg_set_websocket_handler(ctx, "/ws", wsConnect, nullptr, wsMessage, nullptr, nullptr);
-    std::puts("MJPEG stream running on http://raspberrypi.local:8080/stream");
 }
 
 void stop_mjpeg_server() { keep_running = false; }

@@ -238,7 +238,7 @@ int main()
     // Start the main loop and MJPEG server
     try {
         signal(SIGINT, onSignal);   // kill on Ctrl+C
-        start_mjpeg_server();
+        start_mjpeg_server(false);
 
         std::thread motorThread(motorLoop, sockfd);
         
