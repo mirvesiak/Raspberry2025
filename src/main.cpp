@@ -105,6 +105,18 @@ void lineLine(double x1, double y1, double x2, double y2, double x3, double y3, 
   }
 }
 
+float clampAngle(float angle, float limit, bool& reachable) {
+    if (angle < -limit) {
+        reachable = false;
+        return -limit;
+    } 
+    if (angle > limit) {
+        reachable = false;
+        return limit;
+    }
+    return angle;
+}
+
 void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
@@ -163,21 +175,21 @@ void motorLoop(int sockfd)
         } else {
             // Convert joystick input to coordinates
             joystick_to_coordinates(a, d, x, y);
+            
             // Calculate inverse kinematics
-            kSolver.calculateIK(x, y, outA, outB);
+            bool reachable = kSolver.calculateIK(x, y, outA, outB);
             
             // Convert angles to degrees
             outA = outA * 180.0 / PI;
             outB = outB * 180.0 / PI;
 
             // Clamp angles to limits
-            if (outA < -J1_limit) outA = -J1_limit;
-            if (outA > J1_limit) outA = J1_limit;
-            if (outB < -J2_limit) outB = -J2_limit;
-            if (outB > J2_limit) outB = J2_limit;
+            outA = clampAngle(outA, J1_limit, reachable);
+            outB = clampAngle(outB, J2_limit, reachable);
 
             // Fix the target coordinates
-            kSolver.calculateFK(x, y, outA, outB);
+            if (!reachable)
+                kSolver.calculateFK(x, y, outA, outB);
 
             // send motor command
             std::string message = "MOTOR " + std::to_string(outA) + " " + std::to_string(outB) + "\n";
