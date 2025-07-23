@@ -114,20 +114,20 @@ int connect_to_ev3(const char* ip, int port) {
     return sockfd;
 }
 
-void resolvePointAABBCollision(float oldX, float oldY, float& newX, float& newY, float left, float top, float right, float bottom) {
+void resolvePointAABBCollision(double oldX, double oldY, double& newX, double& newY, double left, double top, double right, double bottom) {
     // If point is not inside the AABB, return early
     if (newX <= left || newX >= right || newY <= top || newY >= bottom)
         return;
 
     // Compute movement delta
-    float dx = newX - oldX;
-    float dy = newY - oldY;
+    double dx = newX - oldX;
+    double dy = newY - oldY;
 
     // Time to collide with each side (if moving)
-    float tx = (dx > 0) ? (left - oldX) / dx :
+    double tx = (dx > 0) ? (left - oldX) / dx :
                (dx < 0) ? (right - oldX) / dx : -INFINITY;
 
-    float ty = (dy > 0) ? (top - oldY) / dy :
+    double ty = (dy > 0) ? (top - oldY) / dy :
                (dy < 0) ? (bottom - oldY) / dy : -INFINITY;
 
     // Choose the axis with the earlier collision
@@ -242,7 +242,7 @@ void motorLoop(int sockfd)
             outB = outB * 180.0 / PI;
 
             // Clamp angles to limits
-            outA = clampAngle(outA, J1_limit, reachable);0
+            outA = clampAngle(outA, J1_limit, reachable);
             outB = clampAngle(outB, J2_limit, reachable);
 
             // Fix the target coordinates
