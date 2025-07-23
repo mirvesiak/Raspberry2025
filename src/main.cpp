@@ -225,17 +225,18 @@ void motorLoop(int sockfd)
             outA = clampAngle(outA, J1_limit, reachable);
             outB = clampAngle(outB, J2_limit, reachable);
             std::cout << "Clamped Angles: A=" << outA << ", B=" << outB << "\n";
-            
+
             // Fix the target coordinates
             if (!reachable)
                 kSolver.calculateFK(x, y, outA, outB);
-
+            std::cout << "Target Coordinates: (" << x << ", " << y << ")\n";
             // send motor command
             char buffer[50];
             std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
             std::string message(buffer);
             // std::cout << "Sending command: " << message;
             send(sockfd, message.c_str(), message.size(), 0);
+            std::cout<<"----------------END OF LOOP----------------\n";
         }
 
         if (!reader.readLine(line)) {
