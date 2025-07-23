@@ -1,6 +1,6 @@
 #include "camera_stream.hpp"
 #include "SocketLineReader.hpp"
-#include "IKSolver.hpp"
+#include "KSolver.hpp"
 #include <iostream>
 #include <signal.h>
 #include <thread>
