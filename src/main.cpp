@@ -177,6 +177,9 @@ void motorLoop(int sockfd)
     // Motor control loop
     bool last_isGrabbing = isGrabbing.load(std::memory_order_relaxed);
     while (!go_shutdown.load(std::memory_order_relaxed)) {
+        // get the current time for loop timing
+        auto loop_start = std::chrono::steady_clock::now();
+
         int a = joystick_angle.load(std::memory_order_relaxed);
         int d = joystick_distance.load(std::memory_order_relaxed);
         bool current_isGrabbing = isGrabbing.load(std::memory_order_relaxed);
@@ -220,7 +223,17 @@ void motorLoop(int sockfd)
             std::cout << "EV3: " << line << "\n";
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(50)); // 20 Hz
+        auto loop_end = std::chrono::steady_clock::now();
+        auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(loop_end - loop_start);
+        auto sleep_duration = std::chrono::milliseconds(50) - iteration_duration;
+
+        if (sleep_duration > std::chrono::milliseconds(0)) {
+            std::this_thread::sleep_for(sleep_duration);
+        } else {
+            // Optional: warn if over time
+            std::cerr << "Warning: Control loop overran by " 
+                    << -sleep_duration.count() << " ms\n";
+    }
     }
 }
 
