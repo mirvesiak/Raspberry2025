@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>  // For socket functions
 #include <cmath>
+#include <cstdio>
 
 static std::atomic<bool> go_shutdown{false};
 
@@ -55,6 +56,21 @@ void print_raw(const char* data, size_t len) {
     }
 }
 
+void start_ev3_script() {
+    std::string ev3_script = "arm_test.py";
+    // Start the Python script on the EV3
+    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 " + ev3_script + " > /dev/null 2>&1 &'";
+    std::cout << "Starting Python script on EV3...\n";
+    int result = system(ssh_command.c_str());
+    if (result != 0) {
+        std::cerr << "Failed to launch script on EV3\n";
+        return 1;
+    }
+    std::cout << "Python script started\n";
+    std::cout << "Waiting 5 seconds for EV3 to be ready...\n";
+    std::this_thread::sleep_for(std::chrono::seconds(5));  // Wait for the server to start
+}
+
 int connect_to_ev3(const char* ip, int port) {
     int sockfd;
     struct sockaddr_in serv_addr;
@@ -89,20 +105,38 @@ int connect_to_ev3(const char* ip, int port) {
         std::this_thread::sleep_for(std::chrono::seconds(2));  // Retry every second
     }
 
+    SocketLineReader reader(sockfd);
+    std::string line;
+    // Wait for the EV3 to be ready
+    while (true) {
+        if (!reader.readLine(line)) {
+            std::cerr << "Read error.\n";
+            return;
+        }
+
+        if (line == "RDY") {
+            std::cout << "EV3 is ready to receive commands.\n";
+            break;
+        } else {
+            std::cout << "EV3: " << line << "\n";
+        }
+    }
+
     return sockfd;
 }
 
-void lineLine(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersectionX, double &intersectionY) {
-  // calculate the distance to intersection point
-  double uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
-  double uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+bool lineLine(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double &intersectionX, double &intersectionY) {
+    // calculate the distance to intersection point
+    double uA = ((x4-x3)*(y1-y3) - (y4-y3)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
+    double uB = ((x2-x1)*(y1-y3) - (y2-y1)*(x1-x3)) / ((y4-y3)*(x2-x1) - (x4-x3)*(y2-y1));
 
-  // if uA and uB are between 0-1, lines are colliding
-  if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
-    // optionally, draw a circle where the lines meet
-    intersectionX = x1 + (uA * (x2-x1));
-    intersectionY = y1 + (uA * (y2-y1));
-  }
+    // if uA and uB are between 0-1, lines are colliding
+    if (uA >= 0 && uA <= 1 && uB >= 0 && uB <= 1) {
+        intersectionX = x1 + (uA * (x2-x1));
+        intersectionY = y1 + (uA * (y2-y1));
+        return true; // Lines intersect
+    }
+    return false; // Lines do not intersect
 }
 
 float clampAngle(float angle, float limit, bool& reachable) {
@@ -122,16 +156,16 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
     std::cout << "(" << x << ", " << y << ") -> (" << new_x << ", " << new_y << ")\n";
     // Apply deadzone
-    if ((new_x < deadzone_x_left || new_x > deadzone_x_right) && (new_y < deadzone_y_bottom || new_y > deadzone_y_top)) {
+    if (new_x < deadzone_x_left || new_x > deadzone_x_right || new_y < deadzone_y_bottom || new_y > deadzone_y_top) {
         // If outside deadzone, update coordinates
         x = new_x;
         y = new_y;
     } else {
         // If inside deadzone, clamp to the nearest deadzone edge
-        lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_top, x, y); // Top edge
-        lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_top, deadzone_x_right, deadzone_y_bottom, x, y); // Right edge
-        lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_bottom, deadzone_x_left, deadzone_y_bottom, x, y); // Bottom edge
-        lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_bottom, deadzone_x_left, deadzone_y_top, x, y); // Left edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_top, deadzone_x_right, deadzone_y_top, x, y)) break; // Top edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_top, deadzone_x_right, deadzone_y_bottom, x, y)) break; // Right edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_right, deadzone_y_bottom, deadzone_x_left, deadzone_y_bottom, x, y)) break; // Bottom edge
+        if (lineLine(x, y, new_x, new_y, deadzone_x_left, deadzone_y_bottom, deadzone_x_left, deadzone_y_top, x, y)) break; // Left edge
     }
 }
 
@@ -139,20 +173,6 @@ void motorLoop(int sockfd)
 {
     SocketLineReader reader(sockfd);
     std::string line;
-    // Wait for the EV3 to be ready
-    while (true) {
-        if (!reader.readLine(line)) {
-            std::cerr << "Read error.\n";
-            return;
-        }
-
-        if (line == "RDY") {
-            std::cout << "EV3 is ready to receive commands. Starting the transmission.\n";
-            break;
-        } else {
-            std::cout << "EV3: " << line << "\n";
-        }
-    }
 
     // Initialize the IK solver
     KSolver kSolver(L1, L2, offset);
@@ -175,7 +195,6 @@ void motorLoop(int sockfd)
         } else {
             // Convert joystick input to coordinates
             joystick_to_coordinates(a, d, x, y);
-            
             // Calculate inverse kinematics
             bool reachable = kSolver.calculateIK(x, y, outA, outB);
             
@@ -192,7 +211,9 @@ void motorLoop(int sockfd)
                 kSolver.calculateFK(x, y, outA, outB);
 
             // send motor command
-            std::string message = "MOTOR " + std::to_string(outA) + " " + std::to_string(outB) + "\n";
+            char buffer[50];
+            std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
+            std::string message(buffer);
             // std::cout << "Sending command: " << message;
             send(sockfd, message.c_str(), message.size(), 0);
         }
@@ -212,18 +233,7 @@ void motorLoop(int sockfd)
 
 int main()
 {
-    // Start the Python server on the EV3
-    std::string ssh_command = "ssh robot@10.42.0.3 'nohup python3 /home/robot/arm_test.py > /dev/null 2>&1 &'";
-    std::cout << "Starting Python server on EV3...\n";
-    int result = system(ssh_command.c_str());
-    if (result != 0) {
-        std::cerr << "Failed to launch server on EV3\n";
-        return 1;
-    }
-    std::cout << "Python server script started\n";
-    std::cout << "Waiting 5 seconds for EV3 to be ready...\n";
-    std::this_thread::sleep_for(std::chrono::seconds(5));  // Wait for the server to start
-
+    start_ev3_script();
     // Connect to the EV3
     int sockfd = connect_to_ev3(EV3_IP, PORT);
     if (sockfd < 0) {
