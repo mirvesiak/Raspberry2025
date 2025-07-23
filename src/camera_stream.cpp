@@ -11,6 +11,7 @@ static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
 std::atomic<int> joystick_angle{0};
 std::atomic<int> joystick_distance{0};
+std::atomic<bool> isGrabbing{false};
 
 static void translate_message(const std::string_view msg, int *angle, int *distance) {
     // Translate joystick message to float values
@@ -35,11 +36,33 @@ static int wsConnect(const mg_connection*, void*) { return 0; }           // acc
 static int wsMessage(mg_connection *conn, int, char *data,
                       size_t len, void*) {
     std::string_view msg = std::string_view{data, len};
-    int angle = 0;
-    int distance = 0;
-    translate_message(msg, &angle, &distance);
-    joystick_angle.store(angle, std::memory_order_relaxed);
-    joystick_distance.store(distance, std::memory_order_relaxed);
+    const char prefix = msg[0];     // Save the first char for switch
+    msg.remove_prefix(1);           // Remove it before the switch
+    switch (prefix)                 // switch on first char
+    {
+    case 'M':  // Joystick message
+        int angle = 0;
+        int distance = 0;
+        translate_message(msg, &angle, &distance);
+        joystick_angle.store(angle, std::memory_order_relaxed);
+        joystick_distance.store(distance, std::memory_order_relaxed);
+        break;
+
+    case 'G':  // Switch message
+        if (msg == "1") {
+            isGrabbing.store(true, std::memory_order_relaxed);
+        } else if (msg == "0") {
+            isGrabbing.store(false, std::memory_order_relaxed);
+        } else {
+            std::cerr << "[error] Invalid switch message: " << msg << std::endl;
+        }
+        break;
+    
+    default:
+        std::cerr << "[warn] Unrecognized message prefix: " << prefix << ", msg: " << msg << std::endl;
+        break;
+    }
+    
     return 1;  // 1 = keep connection open
 }
 

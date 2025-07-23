@@ -28,11 +28,18 @@ pad.on('move', (_, data) => {
     deg = 0;
     dst = 0;
   } 
-  send(deg + '#' + dst);
+  send('M' + deg + '#' + dst);
   dbg.textContent = `Angle: ${deg} °     Distance: ${dst} %`;
 });
 
 pad.on('end', () => { 
   dbg.textContent = 'Angle: 0 °     Distance: 0 %';
-  send("0#0");
+  send("M0#0");
+});
+
+const toggle = document.getElementById("toggle-switch");
+
+toggle.addEventListener("change", () => {
+  const value = toggle.checked ? "G1" : "G0";
+  send(value);
 });
