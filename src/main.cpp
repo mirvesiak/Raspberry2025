@@ -120,6 +120,7 @@ float clampAngle(float angle, float limit, bool& reachable) {
 void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     double new_x = x + distance * SENSITIVITY * std::cos(angle * PI / 180.0);
     double new_y = y + distance * SENSITIVITY * std::sin(angle * PI / 180.0);
+    std::cout << "(" << x << ", " << y << ") -> (" << new_x << ", " << new_y << ")\n";
     // Apply deadzone
     if ((new_x < deadzone_x_left || new_x > deadzone_x_right) && (new_y < deadzone_y_bottom || new_y > deadzone_y_top)) {
         // If outside deadzone, update coordinates
@@ -192,7 +193,7 @@ void motorLoop(int sockfd)
 
             // send motor command
             std::string message = "MOTOR " + std::to_string(outA) + " " + std::to_string(outB) + "\n";
-            std::cout << "Sending command: " << message;
+            // std::cout << "Sending command: " << message;
             send(sockfd, message.c_str(), message.size(), 0);
         }
 
