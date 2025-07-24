@@ -1,7 +1,7 @@
 #pragma once
 #include <atomic>
 
-extern std::atomic<bool> go_shutdown{false};
+extern std::atomic<bool> go_shutdown;
 
 bool start_ev3_script();
 int connect_to_ev3(const char* ip, int port);
