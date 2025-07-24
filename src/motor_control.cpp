@@ -282,8 +282,6 @@ void motorLoop(int sockfd) {
             return;
         }
 
-        std::cout << "[RECV] Line: '" << line << "'\n";
-
         if (strncmp(line.c_str(), "OK", 2) != 0) {
             std::cout << "EV3: " << line << "\n";
         }
