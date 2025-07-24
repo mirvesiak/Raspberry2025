@@ -45,24 +45,19 @@ static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
         json j = json::parse(msg);
 
         const std::string type = j.at("type");
-        switch (type)
-        {
-        case "joystick":
+        if (type == "joystick") {
             int angle = j.at("angle");
             int distance = j.at("distance");
             inputHandler.updateJoystick(angle, distance);
-            break;
-        case "grip":
+        } else if (type == "grip") {
             std::string state = j.at("state");
             if (state == "on") {
-                isGrabbing.store(true, std::memory_order_relaxed);
+                inputHandler.setGrabbing(true);
             } else if (state == "off") {
-                isGrabbing.store(false, std::memory_order_relaxed);
+                inputHandler.setGrabbing(false);
             }
-            break;
-        default:
+        } else {
             std::cerr << "[warn] Unknown JSON type: " << type << std::endl;
-            break;
         }
     } catch (const std::exception& e) {
         std::cerr << "[error] Invalid JSON: " << e.what() << std::endl;
@@ -115,14 +110,12 @@ void start_mjpeg_server(bool stream) {
         cam.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
         cam.set(cv::CAP_PROP_FPS, 30);
     }
-    // // CivetWeb config
-    // const char *options[] = {
-    //     "listening_ports", "8080",
-    //     "document_root",   "/home/pi/git/Raspberry2025/www",   // website path
-    //     "index_files",     "index.html",
-    //     "num_threads",     "6",
-    //     nullptr
-    // };
+    // CivetWeb config
+    const char *options[] = {
+        "listening_ports", "8080",
+        "num_threads",     "6",
+        nullptr
+    };
     static struct mg_callbacks callbacks;
     struct mg_context *ctx = mg_start(&callbacks, nullptr, options);
 

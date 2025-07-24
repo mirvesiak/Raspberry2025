@@ -3,12 +3,14 @@
 #include "camera_stream.hpp"
 #include "KSolver.hpp"
 #include "SocketLineReader.hpp"
+
 #include <iostream>
 #include <string>
 #include <thread>
 #include <chrono>
 #include <arpa/inet.h>  // For socket functions
 #include <cstring>      // For memset()
+#include <unistd.h> // for close()
 #include <cmath>
 
 bool start_ev3_script() {    
