@@ -219,7 +219,7 @@ void coordsJobParse(nlohmann::json j, double &x, double &y) {
 }
 
 std::string grabJobParse(nlohmann::json j) {
-    std::string state = j['state'];
+    std::string state = j["state"];
     return std::string("GRABBER ") + state + "\n";
 }
 
