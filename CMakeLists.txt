@@ -7,6 +7,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -O2")
 # Find packages
 find_package(OpenCV REQUIRED)
 find_package(CivetWeb)
+find_package(nlohmann_json 3.12.0 REQUIRED)
 
 # ---------- Your executable ----------
 add_executable(Raspberry2025
@@ -14,6 +15,7 @@ add_executable(Raspberry2025
     src/camera_stream.cpp
     src/SocketLineReader.cpp
     src/KSolver.cpp
+    src/motor_control.cpp
 )
 
 target_include_directories(Raspberry2025 PRIVATE
@@ -22,4 +24,5 @@ target_include_directories(Raspberry2025 PRIVATE
 target_link_libraries(Raspberry2025
     civetweb
     ${OpenCV_LIBS}
+    PRIVATE nlohmann_json::nlohmann_json
 )
