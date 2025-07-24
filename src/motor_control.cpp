@@ -68,6 +68,7 @@ int connect_to_ev3(const char* ip, int port) {
         std::this_thread::sleep_for(std::chrono::seconds(2));  // Retry every second
     }
 
+    std::cout << "Using sockfd: " << sockfd << "\n";
     SocketLineReader reader(sockfd);
     std::string line;
     // Wait for the EV3 to be ready
@@ -246,7 +247,7 @@ void computeAngles(double x, double y, double &outA, double &outB) {
 void motorLoop(int sockfd) {
     using namespace Constants;
     using json = nlohmann::json;
-
+    std::cout << "Using sockfd: " << sockfd << "\n";
     SocketLineReader reader(sockfd);
     std::string line;
     json j;
