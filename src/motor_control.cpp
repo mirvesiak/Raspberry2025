@@ -274,15 +274,14 @@ void motorLoop(int sockfd) {
             } catch (const std::exception& e) {
                 std::cerr << "[error] Invalid JSON: " << e.what() << std::endl;
             }
-        }
+            if (!reader.readLine(line)) {
+                std::cerr << "Read error in motorLoop.\n";
+                return;
+            }
 
-        if (!reader.readLine(line)) {
-            std::cerr << "Read error in motorLoop.\n";
-            return;
-        }
-
-        if (strncmp(line.c_str(), "OK", 2) != 0) {
-            std::cout << "EV3: " << line << "\n";
+            if (strncmp(line.c_str(), "OK", 2) != 0) {
+                std::cout << "EV3: " << line << "\n";
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));

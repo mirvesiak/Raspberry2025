@@ -32,7 +32,7 @@ static int wsConnect(const mg_connection*, void*) { return 0; }           // acc
 
 static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
     std::string msg(data, len);
-    std::cout<<"New app mes: "<< msg << "\n";
+    std::cout<<"New job: "<< msg << "\n";
     json j = json::parse(msg);
 
     inputHandler.addJob(j);
