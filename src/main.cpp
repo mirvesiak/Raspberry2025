@@ -46,7 +46,7 @@ int main()
 
     if (ev3_started) {
         // Connect to the EV3
-        int sockfd = connect_to_ev3(Constants::EV3_IP, Constants::PORT);
+        sockfd = connect_to_ev3(Constants::EV3_IP, Constants::PORT);
         if (sockfd < 0) {
             return 1;  // Connection failed
         }
