@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "-Wall -Wextra -O2")
 # Find packages
 find_package(OpenCV REQUIRED)
 find_package(CivetWeb)
-add_subdirectory(/home/pi/external_libs/json EXCLUDE_FROM_ALL)
+add_subdirectory(/home/pi/external_libs/json ${CMAKE_BINARY_DIR}/external/json)
 
 # ---------- Your executable ----------
 add_executable(Raspberry2025
