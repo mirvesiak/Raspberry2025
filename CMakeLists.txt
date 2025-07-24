@@ -24,5 +24,5 @@ target_include_directories(Raspberry2025 PRIVATE
 target_link_libraries(Raspberry2025
     civetweb
     ${OpenCV_LIBS}
-    PRIVATE nlohmann_json::nlohmann_json
+    nlohmann_json::nlohmann_json
 )
