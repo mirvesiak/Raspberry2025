@@ -48,6 +48,7 @@ static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
         if (type == "joystick") {
             int angle = j.at("angle");
             int distance = j.at("distance");
+            std::cout << angle << " " << distance << endl;
             inputHandler.updateJoystick(angle, distance);
         } else if (type == "grip") {
             std::string state = j.at("state");
