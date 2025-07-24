@@ -315,7 +315,7 @@ void motorLoop(int sockfd) {
             std::cout << "EV3: " << line << "\n";
         }
 
-        std::this_thread::sleep_for(500);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
     
 }
