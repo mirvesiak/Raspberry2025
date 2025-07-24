@@ -214,8 +214,8 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
 // }
 
 void coordsJobParse(nlohmann::json j, double &x, double &y) {
-    x = j['x'];
-    y = j['y'];
+    x = j["x"];
+    y = j["y"];
 }
 
 std::string grabJobParse(nlohmann::json j) {
