@@ -219,7 +219,8 @@ void coordsJobParse(nlohmann::json j, double &x, double &y) {
 }
 
 std::string grabJobParse(nlohmann::json j) {
-    return std::string("GRABBER ") + j['state'] + "\n";
+    std::string state = j['state'];
+    return std::string("GRABBER ") + state + "\n";
 }
 
 void computeAngles(double x, double y, double &outA, double &outB) {
