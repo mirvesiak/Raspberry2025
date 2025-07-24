@@ -15,54 +15,44 @@ static std::atomic<bool> keep_running{true};
 
 InputHandler inputHandler;
 
-int InputHandler::getJoystickAngle() const {
-    return joystick_angle.load();
+bool InputHandler::readLastJob(json &job) {
+    if (!job_queue.empty()) {
+        job = job_queue.front();
+        job_queue.pop();
+        return true;
+    }
+    return false;
 }
 
-int InputHandler::getJoystickDistance() const {
-    return joystick_distance.load();
+void InputHandler::addJob(json job) {
+    job_queue.push(job);
 }
-
-bool InputHandler::getIsGrabbing() const {
-    return isGrabbing.load();
-}
-
-void InputHandler::updateJoystick(int angle, int distance) {
-    joystick_angle.store(angle);
-    joystick_distance.store(distance);
-}
-
-void InputHandler::setGrabbing(bool grabbing) {
-    isGrabbing.store(grabbing);
-}
-
 
 static int wsConnect(const mg_connection*, void*) { return 0; }           // accept all
 
 static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
     std::string msg(data, len);
-    try {
-        json j = json::parse(msg);
+    json j = json::parse(msg);
 
-        const std::string type = j.at("type");
-        if (type == "joystick") {
-            int angle = j.at("angle");
-            int distance = j.at("distance");
-            std::cout << angle << " " << distance << "\n";
-            inputHandler.updateJoystick(angle, distance);
-        } else if (type == "grip") {
-            std::string state = j.at("state");
-            if (state == "on") {
-                inputHandler.setGrabbing(true);
-            } else if (state == "off") {
-                inputHandler.setGrabbing(false);
-            }
-        } else {
-            std::cerr << "[warn] Unknown JSON type: " << type << std::endl;
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "[error] Invalid JSON: " << e.what() << std::endl;
-    }
+    inputHandler.addJob(j);
+    // try {
+        
+    //     const std::string type = j.at("type");
+    //     if (type == "coords") {
+    //         inputHandler.updateCoords(j['x'], j['y']);
+    //     } else if (type == "grip") {
+    //         std::string state = j.at("state");
+    //         if (state == "on") {
+    //             inputHandler.setGrabbing(true);
+    //         } else if (state == "off") {
+    //             inputHandler.setGrabbing(false);
+    //         }
+    //     } else {
+    //         std::cerr << "[warn] Unknown JSON type: " << type << std::endl;
+    //     }
+    // } catch (const std::exception& e) {
+    //     std::cerr << "[error] Invalid JSON: " << e.what() << std::endl;
+    // }
     return 1; // keep the connection open
 }
 

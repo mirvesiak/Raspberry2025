@@ -23,5 +23,5 @@ namespace Constants {
     constexpr int PORT = 1234;
     constexpr const char* EV3_SSH_P1 = "ssh -o ConnectTimeout=5 robot@10.42.0.3 'nohup python3 ";
     constexpr const char* EV3_SSH_P2 = " > /dev/null 2>&1 &'";
-    constexpr const char* EV3_SCRIPT = "arm_test.py";
+    constexpr const char* EV3_SCRIPT = "motor_tests.py";
 }

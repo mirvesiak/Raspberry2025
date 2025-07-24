@@ -1,21 +1,15 @@
 #pragma once
-#include <atomic>
+#include <nlohmann/json.hpp>
+#include <queue>
 
 class InputHandler {
 public:
     // Read-only access
-    int getJoystickAngle() const;
-    int getJoystickDistance() const;
-    bool getIsGrabbing() const;
-
-    // Called only by camera.cpp to update values
-    void updateJoystick(int angle, int distance);
-    void setGrabbing(bool grabbing);
+    bool readLastJob(nlohmann::json &job);
+    void addJob(nlohmann::json job);
 
 private:
-    std::atomic<int> joystick_angle{0};
-    std::atomic<int> joystick_distance{0};
-    std::atomic<bool> isGrabbing{false};
+    std::queue<nlohmann::json> job_queue;
 };
 
 extern InputHandler inputHandler;

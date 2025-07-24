@@ -6,29 +6,14 @@ import numpy as np
 import websocket
 
 from PyQt5.QtWidgets import (
-    QApplication, QLabel, QPushButton, QSlider,
-    QVBoxLayout, QHBoxLayout, QWidget
+    QApplication, QLabel, QHBoxLayout, QPushButton,
+    QVBoxLayout, QWidget, QLineEdit
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QImage, QPixmap
 
 # ---- WebSocket control ----
 ws = None
-
-def send_control(angle, distance, grabbing):
-    if ws and ws.sock and ws.sock.connected:
-        # Send joystick command
-        ws.send(json.dumps({
-            "type": "joystick",
-            "angle": 90,
-            "distance": 50
-        }))
-
-        # Send grab command
-        ws.send(json.dumps({
-            "type": "grip",
-            "state": "on"
-        }))
 
 def start_websocket():
     global ws
@@ -49,46 +34,53 @@ class RobotApp(QWidget):
         self.setWindowTitle("Robot Controller")
         self.setGeometry(100, 100, 900, 700)
 
+        # Layout
+        layout = QVBoxLayout()
+        
         # Video display
         self.video_label = QLabel(self)
         self.video_label.setAlignment(Qt.AlignCenter)
-
-        # Sliders
-        self.angle_slider = QSlider(Qt.Horizontal)
-        self.angle_slider.setRange(0, 360)
-        self.angle_slider.setValue(90)
-
-        self.distance_slider = QSlider(Qt.Horizontal)
-        self.distance_slider.setRange(0, 100)
-        self.distance_slider.setValue(50)
-
-        # Buttons
-        self.grab_button = QPushButton("Grab")
-        self.release_button = QPushButton("Release")
-
-        # Layout
-        layout = QVBoxLayout()
+        self.video_label.setStyleSheet("background-color: #a3a3a3")
         layout.addWidget(self.video_label)
 
-        slider_layout = QHBoxLayout()
-        slider_layout.addWidget(QLabel("Angle"))
-        slider_layout.addWidget(self.angle_slider)
-        slider_layout.addWidget(QLabel("Distance"))
-        slider_layout.addWidget(self.distance_slider)
-        layout.addLayout(slider_layout)
+        self.control_layout = QHBoxLayout()
 
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(self.grab_button)
-        button_layout.addWidget(self.release_button)
-        layout.addLayout(button_layout)
+        # X Y INPUTS
+        self.x_y_box = QVBoxLayout()
+        self.input_box_x = QLineEdit()
+        self.input_box_x.setPlaceholderText("Enter x pos here...")
+        self.x_y_box.addWidget(self.input_box_x)
+
+        self.input_box_y = QLineEdit()
+        self.input_box_y.setPlaceholderText("Enter y pos here...")
+        self.x_y_box.addWidget(self.input_box_y)
+
+        self.x_y_send_button = QPushButton("Send")
+        self.x_y_box.addWidget(self.x_y_send_button)
+
+        self.control_layout.addLayout(self.x_y_box)
+
+        # GRABBER BUTTONS
+        self.grabber_box = QHBoxLayout()
+        self.release_button = QPushButton("RELEASE")
+        self.grab_button = QPushButton("GRAB")
+        self.grabber_box.addWidget(self.release_button)
+        self.grabber_box.addWidget(self.grab_button)
+        
+        self.control_layout.addLayout(self.grabber_box)
+
+        layout.addLayout(self.control_layout)
+
+        # OUTPUT COMMAND
+        self.output_label = QLabel("Output will appear here")
+        layout.addWidget(self.output_label)
 
         self.setLayout(layout)
 
         # Event bindings
-        self.angle_slider.valueChanged.connect(self.send_command)
-        self.distance_slider.valueChanged.connect(self.send_command)
-        self.grab_button.clicked.connect(lambda: send_control(self.angle_slider.value(), self.distance_slider.value(), True))
-        self.release_button.clicked.connect(lambda: send_control(self.angle_slider.value(), self.distance_slider.value(), False))
+        self.x_y_send_button.clicked.connect(self.send_coords)
+        self.release_button.clicked.connect(lambda: self.send_grabber(False))
+        self.grab_button.clicked.connect(lambda: self.send_grabber(True))
 
         # Start video feed timer
         self.cap = cv2.VideoCapture("http://raspberrypi.local:8080/stream")
@@ -96,10 +88,29 @@ class RobotApp(QWidget):
         self.timer.timeout.connect(self.update_frame)
         self.timer.start(30)
 
-    def send_command(self):
-        angle = self.angle_slider.value()
-        distance = self.distance_slider.value()
-        send_control(angle, distance, False)
+    def send_coords(self):
+        if ws and ws.sock and ws.sock.connected:
+            x = self.input_box_x.text()
+            y = self.input_box_y.text()
+            if x and y:
+                message = json.dumps({"type": "coords", "x": float(x), "y": float(y)})
+                ws.send(message)
+                self.output_label.setText(message)
+                self.input_box_x.clear()
+                self.input_box_y.clear()
+            else:
+                self.input_box_x.clear()
+                self.input_box_y.clear()
+
+    def send_grabber(self, state):
+        if ws and ws.sock and ws.sock.connected:
+            message = ""
+            if state:
+                message = json.dumps({"type": "grip", "state": "on"})
+            else:
+                message = json.dumps({"type": "grip", "state": "on"})
+            ws.send(message)
+            self.output_label.setText(message)
 
     def update_frame(self):
         ret, frame = self.cap.read()
