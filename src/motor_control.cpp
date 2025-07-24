@@ -263,10 +263,11 @@ void motorLoop(int sockfd) {
                     char buffer[50];
                     std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
                     std::string message(buffer);
-                    // std::cout << "Sending command: " << message;
+                    std::cout << "Sending command: " << message;
                     send(sockfd, message.c_str(), message.size(), 0);
                 } else if (type == "grip") {
                     std::string message = grabJobParse(j);
+                    std::cout << "Sending command: " << message;
                     send(sockfd, message.c_str(), message.size(), 0);
                 } else {
                     std::cerr << "[warn] Unknown JSON type: " << type << std::endl;
