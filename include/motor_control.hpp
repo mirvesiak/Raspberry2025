@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 
 extern std::atomic<bool> go_shutdown{false};
 

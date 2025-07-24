@@ -11,7 +11,7 @@
 #include <cstdio>
 #include <cctype>  // for std::isprint
 
-static std::atomic<bool> go_shutdown{false};
+std::atomic<bool> go_shutdown{false};
 
 void onSignal(int) {
     go_shutdown.store(true, std::memory_order_relaxed);  // async‑signal‑safe
