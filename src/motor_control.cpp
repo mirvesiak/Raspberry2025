@@ -137,81 +137,81 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
     y = new_y;
 }
 
-void motorLoop_contin(int sockfd)
-{
-    using namespace Constants;
-    SocketLineReader reader(sockfd);
-    std::string line;
+// void motorLoop_contin(int sockfd)
+// {
+//     using namespace Constants;
+//     SocketLineReader reader(sockfd);
+//     std::string line;
 
-    // Initialize the IK solver
-    KSolver kSolver(L1, L2, offset);
-    double x = 6.0; // Initial x coordinate
-    double y = 18.1; // Initial y coordinate
-    double outA = 0.0; // Joint 1 angle
-    double outB = 0.0; // Joint 2 angle
+//     // Initialize the IK solver
+//     KSolver kSolver(L1, L2, offset);
+//     double x = 6.0; // Initial x coordinate
+//     double y = 18.1; // Initial y coordinate
+//     double outA = 0.0; // Joint 1 angle
+//     double outB = 0.0; // Joint 2 angle
 
-    // Motor control loop
-    bool last_isGrabbing = inputHandler.getIsGrabbing();
-    while (!go_shutdown.load(std::memory_order_relaxed)) {
-        // get the current time for loop timing
-        auto loop_start = std::chrono::steady_clock::now();
+//     // Motor control loop
+//     bool last_isGrabbing = inputHandler.getIsGrabbing();
+//     while (!go_shutdown.load(std::memory_order_relaxed)) {
+//         // get the current time for loop timing
+//         auto loop_start = std::chrono::steady_clock::now();
 
-        double x = inputHandler.getX();
-        double y = inputHandler.getY();
-        bool current_isGrabbing = inputHandler.getIsGrabbing();
+//         double x = inputHandler.getX();
+//         double y = inputHandler.getY();
+//         bool current_isGrabbing = inputHandler.getIsGrabbing();
 
-        if (last_isGrabbing != current_isGrabbing) {
-            last_isGrabbing = current_isGrabbing;
-            std::string message = "GRABBER " + std::to_string(current_isGrabbing) + "\n";
-            send(sockfd, message.c_str(), message.size(), 0);
-        } else {
-            // Convert joystick input to coordinates
-            // joystick_to_coordinates(a, d, x, y);
+//         if (last_isGrabbing != current_isGrabbing) {
+//             last_isGrabbing = current_isGrabbing;
+//             std::string message = "GRABBER " + std::to_string(current_isGrabbing) + "\n";
+//             send(sockfd, message.c_str(), message.size(), 0);
+//         } else {
+//             // Convert joystick input to coordinates
+//             // joystick_to_coordinates(a, d, x, y);
 
-            // Calculate inverse kinematics
-            bool reachable = kSolver.calculateIK(x, y, outA, outB);
+//             // Calculate inverse kinematics
+//             bool reachable = kSolver.calculateIK(x, y, outA, outB);
             
-            // Convert angles to degrees
-            outA = outA * 180.0 / PI;
-            outB = outB * 180.0 / PI;
+//             // Convert angles to degrees
+//             outA = outA * 180.0 / PI;
+//             outB = outB * 180.0 / PI;
 
-            // Clamp angles to limits
-            outA = clampAngle(outA, J1_limit, reachable);
-            outB = clampAngle(outB, J2_limit, reachable);
+//             // Clamp angles to limits
+//             outA = clampAngle(outA, J1_limit, reachable);
+//             outB = clampAngle(outB, J2_limit, reachable);
 
-            // Fix the target coordinates
-            if (!reachable)
-                kSolver.calculateFK(x, y, outA, outB);
-            // send motor command
-            char buffer[50];
-            std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
-            std::string message(buffer);
-            // std::cout << "Sending command: " << message;
-            send(sockfd, message.c_str(), message.size(), 0);
-        }
+//             // Fix the target coordinates
+//             if (!reachable)
+//                 kSolver.calculateFK(x, y, outA, outB);
+//             // send motor command
+//             char buffer[50];
+//             std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
+//             std::string message(buffer);
+//             // std::cout << "Sending command: " << message;
+//             send(sockfd, message.c_str(), message.size(), 0);
+//         }
 
-        if (!reader.readLine(line)) {
-            std::cerr << "Read error.\n";
-            return;
-        }
+//         if (!reader.readLine(line)) {
+//             std::cerr << "Read error.\n";
+//             return;
+//         }
 
-        if (strncmp(line.c_str(), "OK", 2) != 0) {
-            std::cout << "EV3: " << line << "\n";
-        }
+//         if (strncmp(line.c_str(), "OK", 2) != 0) {
+//             std::cout << "EV3: " << line << "\n";
+//         }
 
-        auto loop_end = std::chrono::steady_clock::now();
-        auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(loop_end - loop_start);
-        auto sleep_duration = std::chrono::milliseconds(control_loop_ms) - iteration_duration;
+//         auto loop_end = std::chrono::steady_clock::now();
+//         auto iteration_duration = std::chrono::duration_cast<std::chrono::milliseconds>(loop_end - loop_start);
+//         auto sleep_duration = std::chrono::milliseconds(control_loop_ms) - iteration_duration;
 
-        if (sleep_duration > std::chrono::milliseconds(0)) {
-            std::this_thread::sleep_for(sleep_duration);
-        } else {
-            // Optional: warn if over time
-            std::cerr << "Warning: Control loop overran by " 
-                    << -sleep_duration.count() << " ms\n";
-        }
-    }
-}
+//         if (sleep_duration > std::chrono::milliseconds(0)) {
+//             std::this_thread::sleep_for(sleep_duration);
+//         } else {
+//             // Optional: warn if over time
+//             std::cerr << "Warning: Control loop overran by " 
+//                     << -sleep_duration.count() << " ms\n";
+//         }
+//     }
+// }
 
 void coordsJobParse(nlohmann::json j, double &x, double &y) {
     x = j['x'];
@@ -219,12 +219,16 @@ void coordsJobParse(nlohmann::json j, double &x, double &y) {
 }
 
 std::string grabJobParse(nlohmann::json j) {
-    return std::string("GRABBER ") + j.at("state") + "\n";
+    return std::string("GRABBER ") + j['state'] + "\n";
 }
 
 void computeAngles(double x, double y, double &outA, double &outB) {
+    using namespace Constants;
+    // Initialize the IK solver
+    KSolver kSolver(L1, L2, offset);
+
     bool reachable = kSolver.calculateIK(x, y, outA, outB);
-            
+    
     // Convert angles to degrees
     outA = outA * 180.0 / PI;
     outB = outB * 180.0 / PI;
@@ -245,19 +249,14 @@ void motorLoop(int sockfd) {
     SocketLineReader reader(sockfd);
     std::string line;
 
-    // Initialize the IK solver
-    KSolver kSolver(L1, L2, offset);
-    double x = 0.0; // target x
-    double y = 0.0; // target y
-    double outA = 0.0; // Joint 1 angle
-    double outB = 0.0; // Joint 2 angle
-
     while (!go_shutdown.load(std::memory_order_relaxed)) {
         json j;
         if (inputHandler.readLastJob(j)) {
             try {
                 const std::string type = j.at("type");
                 if (type == "coords") {
+                    double x = 0.0, y = 0.0;
+                    double outA = 0.0, outB = 0.0;
                     coordsJobParse(j, x, y);
                     computeAngles(x, y, outA, outB);
                     // send motor command
