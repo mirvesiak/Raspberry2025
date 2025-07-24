@@ -249,9 +249,9 @@ void motorLoop(int sockfd) {
 
     SocketLineReader reader(sockfd);
     std::string line;
+    json j;
 
     while (!go_shutdown.load(std::memory_order_relaxed)) {
-        json j;
         if (inputHandler.readLastJob(j)) {
             try {
                 const std::string type = j.at("type");
@@ -277,38 +277,8 @@ void motorLoop(int sockfd) {
             }
         }
 
-        // if (last_isGrabbing != current_isGrabbing) {
-        //     last_isGrabbing = current_isGrabbing;
-        //     std::string message = "GRABBER " + std::to_string(current_isGrabbing) + "\n";
-        //     send(sockfd, message.c_str(), message.size(), 0);
-        // } else {
-        //     // Convert joystick input to coordinates
-        //     // joystick_to_coordinates(a, d, x, y);
-
-        //     // Calculate inverse kinematics
-        //     bool reachable = kSolver.calculateIK(x, y, outA, outB);
-            
-        //     // Convert angles to degrees
-        //     outA = outA * 180.0 / PI;
-        //     outB = outB * 180.0 / PI;
-
-        //     // Clamp angles to limits
-        //     outA = clampAngle(outA, J1_limit, reachable);
-        //     outB = clampAngle(outB, J2_limit, reachable);
-
-        //     // Fix the target coordinates
-        //     if (!reachable)
-        //         kSolver.calculateFK(x, y, outA, outB);
-        //     // send motor command
-        //     char buffer[50];
-        //     std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
-        //     std::string message(buffer);
-        //     // std::cout << "Sending command: " << message;
-        //     send(sockfd, message.c_str(), message.size(), 0);
-        // }
-
         if (!reader.readLine(line)) {
-            std::cerr << "Read error.\n";
+            std::cerr << "Read error in motorLoop.\n";
             return;
         }
 
