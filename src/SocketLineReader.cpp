@@ -26,6 +26,8 @@
 #include <cerrno>
 #include <cstring> // for strerror()
 
+SocketLineReader::SocketLineReader(int fd) : sockfd(fd) {}
+
 bool SocketLineReader::readLine(std::string& out) {
     size_t pos;
     while ((pos = buffer.find('\n')) == std::string::npos) {
