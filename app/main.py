@@ -108,7 +108,7 @@ class RobotApp(QWidget):
             if state:
                 message = json.dumps({"type": "grip", "state": "on"})
             else:
-                message = json.dumps({"type": "grip", "state": "on"})
+                message = json.dumps({"type": "grip", "state": "off"})
             ws.send(message)
             self.output_label.setText(message)
 
