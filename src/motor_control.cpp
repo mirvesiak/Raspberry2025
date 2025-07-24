@@ -1,13 +1,15 @@
 #include "constants.hpp"
 #include "motor_control.hpp"
+#include "camera_stream.hpp"
 #include "KSolver.hpp"
 #include "SocketLineReader.hpp"
-#include "camera_stream.hpp"
 #include <iostream>
 #include <string>
 #include <thread>
 #include <chrono>
-#include <arpa/inet.h>  //socket
+#include <arpa/inet.h>  // For socket functions
+#include <cstring>      // For memset()
+#include <cmath>
 
 bool start_ev3_script() {    
     using namespace Constants;
@@ -146,14 +148,14 @@ void motorLoop(int sockfd)
     double outB = 0.0; // Joint 2 angle
 
     // Motor control loop
-    bool last_isGrabbing = isGrabbing.load(std::memory_order_relaxed);
+    bool last_isGrabbing = inputHandler.getIsGrabbing();
     while (!go_shutdown.load(std::memory_order_relaxed)) {
         // get the current time for loop timing
         auto loop_start = std::chrono::steady_clock::now();
 
-        int a = joystick_angle.load(std::memory_order_relaxed);
-        int d = joystick_distance.load(std::memory_order_relaxed);
-        bool current_isGrabbing = isGrabbing.load(std::memory_order_relaxed);
+        int a = inputHandler.getJoystickAngle();
+        int d = inputHandler.getJoystickDistance();
+        bool current_isGrabbing = inputHandler.getIsGrabbing();
 
         if (last_isGrabbing != current_isGrabbing) {
             last_isGrabbing = current_isGrabbing;

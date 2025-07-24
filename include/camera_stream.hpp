@@ -18,7 +18,7 @@ private:
     std::atomic<bool> isGrabbing{false};
 };
 
-extern InputHandler InputHandler;
+extern InputHandler inputHandler;
 
 // External functions (not related to the state)
 void start_mjpeg_server(bool stream);

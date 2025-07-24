@@ -1,16 +1,15 @@
 #include "constants.hpp"
 #include "camera_stream.hpp"
 #include "motor_control.hpp"
+
 #include <iostream>
 #include <signal.h>
 #include <thread>
-#include <chrono>
 #include <atomic>
-#include <cstring>      // For memset()
 #include <unistd.h>
-#include <arpa/inet.h>  // For socket functions
-#include <cmath>
+#include <arpa/inet.h>
 #include <cstdio>
+#include <cctype>  // for std::isprint
 
 static std::atomic<bool> go_shutdown{false};
 
@@ -42,6 +41,8 @@ int main()
 {
     // Start the EV3 script, if it fails, exit
     bool ev3_started = start_ev3_script();
+    int sockfd = -1;
+    std::thread motorThread;
 
     if (ev3_started) {
         // Connect to the EV3
@@ -55,7 +56,7 @@ int main()
     try {
         signal(SIGINT, onSignal);   // kill on Ctrl+C
         start_mjpeg_server(true);
-        if (ev3_started) std::thread motorThread(motorLoop, sockfd);
+        if (ev3_started) motorThread = std::thread(motorLoop, sockfd);
     
         while (!go_shutdown.load(std::memory_order_relaxed)) {
             pause();
