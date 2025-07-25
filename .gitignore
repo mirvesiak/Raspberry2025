@@ -36,3 +36,6 @@ build/*
 
 # EV3 files
 ev3/*
+
+# App files
+app/*
