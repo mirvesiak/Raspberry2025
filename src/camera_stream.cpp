@@ -33,9 +33,17 @@ static int wsConnect(const mg_connection*, void*) { return 0; }           // acc
 static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
     std::string msg(data, len);
     std::cout<<"New job: "<< msg << "\n";
-    json j = json::parse(msg);
-
-    inputHandler.addJob(j);
+    try
+    {
+        json j = json::parse(msg);
+        inputHandler.addJob(j);
+    }
+    catch(const json::parse_error& e)
+    {
+        std::cerr << "JSON parse error: " << e.what() << "\n";
+    }
+    
+    
     // try {
         
     //     const std::string type = j.at("type");
