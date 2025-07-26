@@ -282,6 +282,8 @@ void motorLoop(int sockfd) {
 
             if (strncmp(line.c_str(), "OK", 2) != 0) {
                 std::cout << "EV3: " << line << "\n";
+            } else {
+                std::cout << "Command OK.\n";
             }
         }
 
