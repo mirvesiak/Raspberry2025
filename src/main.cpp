@@ -68,7 +68,7 @@ int main()
 
             std::string message = "SHUTDOWN";
             send(sockfd, message.c_str(), message.size(), 0);
-
+            
             shutdown(sockfd, SHUT_RDWR);  // Optional but cleaner
         }
         std::cout << "Shutdown complete.\n";

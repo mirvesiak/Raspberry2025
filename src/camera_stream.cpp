@@ -82,6 +82,13 @@ static int streamHandler(struct mg_connection *conn, void * /*cbdata*/) {
         if (!cam.read(frame))  // grab frame
             continue;
 
+        const int original_width = frame.cols;
+        const int crop_width = static_cast<int>(original_width * 0.70);
+        const int x_offset = (original_width - crop_width) / 2;
+
+        cv::Rect roi(x_offset, 0, crop_width, frame.rows);
+        cv::Mat cropped = frame(roi);
+        
         // 2. Re‑encode to JPEG (quality=70 → good size/latency compromise)
         jpg.clear();
         cv::imencode(".jpg", frame, jpg, {cv::IMWRITE_JPEG_QUALITY, 70});
