@@ -88,10 +88,10 @@ static int streamHandler(struct mg_connection *conn, void * /*cbdata*/) {
 
         cv::Rect roi(x_offset, 0, crop_width, frame.rows);
         cv::Mat cropped = frame(roi);
-        
+
         // 2. Re‑encode to JPEG (quality=70 → good size/latency compromise)
         jpg.clear();
-        cv::imencode(".jpg", frame, jpg, {cv::IMWRITE_JPEG_QUALITY, 70});
+        cv::imencode(".jpg", cropped, jpg, {cv::IMWRITE_JPEG_QUALITY, 70});
 
         // 3. Send multipart boundary + JPEG chunk
         mg_printf(conn,
