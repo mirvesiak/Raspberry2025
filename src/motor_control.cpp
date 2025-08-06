@@ -250,6 +250,7 @@ void motorLoop(int sockfd) {
 
     while (!go_shutdown.load(std::memory_order_relaxed)) {
         if (jobHandler.readLastJob(j)) {
+            bool waitForOK = false;
             try {
                 const std::string type = j.at("type");
                 if (type == "coords") {
@@ -263,6 +264,7 @@ void motorLoop(int sockfd) {
                         std::string message(buffer);
                         std::cout << "Sending command: " << message;
                         send(sockfd, message.c_str(), message.size(), 0);
+                        waitForOK = true; // Wait for confirmation
                     } else {
                         std::cerr << "[warn] Target coordinates (" << x << ", " << y << ") are unreachable.\n";
                         send_ws_message("UNR"); // UNREACHABLE
@@ -272,22 +274,26 @@ void motorLoop(int sockfd) {
                     std::string message = grabJobParse(j);
                     std::cout << "Sending command: " << message;
                     send(sockfd, message.c_str(), message.size(), 0);
+                    waitForOK = true; // Wait for confirmation
                 } else {
                     std::cerr << "[warn] Unknown JSON type: " << type << std::endl;
                 }
             } catch (const std::exception& e) {
                 std::cerr << "[error] Invalid JSON: " << e.what() << std::endl;
             }
-            if (!reader.readLine(line)) {
-                std::cerr << "Read error in motorLoop.\n";
-                return;
-            }
-
-            if (strncmp(line.c_str(), "OK", 2) != 0) {
-                std::cout << "EV3: " << line << "\n";
-            } else {
-                std::cout << "Command OK.\n";
-                send_ws_message("CMP"); // COMPLETED
+            if (waitForOK) {
+                if (!reader.readLine(line)) {
+                    std::cerr << "Read error in motorLoop.\n";
+                    return;
+                }
+    
+                if (strncmp(line.c_str(), "OK", 2) != 0) {
+                    std::cout << "EV3: " << line << "\n";
+                    send_ws_message("EV3_RSP"); // EV3 RESPONSE
+                } else {
+                    std::cout << "Command OK.\n";
+                    send_ws_message("CMP"); // COMPLETED
+                }
             }
         }
 
