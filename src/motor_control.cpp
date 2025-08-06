@@ -151,14 +151,14 @@ void joystick_to_coordinates(int angle, int distance, double& x, double& y) {
 //     double outB = 0.0; // Joint 2 angle
 
 //     // Motor control loop
-//     bool last_isGrabbing = inputHandler.getIsGrabbing();
+//     bool last_isGrabbing = jobHandler.getIsGrabbing();
 //     while (!go_shutdown.load(std::memory_order_relaxed)) {
 //         // get the current time for loop timing
 //         auto loop_start = std::chrono::steady_clock::now();
 
-//         double x = inputHandler.getX();
-//         double y = inputHandler.getY();
-//         bool current_isGrabbing = inputHandler.getIsGrabbing();
+//         double x = jobHandler.getX();
+//         double y = jobHandler.getY();
+//         bool current_isGrabbing = jobHandler.getIsGrabbing();
 
 //         if (last_isGrabbing != current_isGrabbing) {
 //             last_isGrabbing = current_isGrabbing;
@@ -223,7 +223,7 @@ std::string grabJobParse(nlohmann::json j) {
     return std::string("GRABBER ") + state + "\n";
 }
 
-void computeAngles(double x, double y, double &outA, double &outB) {
+bool computeAngles(double x, double y, double &outA, double &outB) {
     using namespace Constants;
     // Initialize the IK solver
     KSolver kSolver(L1, L2, offset);
@@ -237,10 +237,8 @@ void computeAngles(double x, double y, double &outA, double &outB) {
     // Clamp angles to limits
     outA = clampAngle(outA, J1_limit, reachable);
     outB = clampAngle(outB, J2_limit, reachable);
-
-    // Fix the target coordinates
-    if (!reachable)
-        kSolver.calculateFK(x, y, outA, outB);
+    
+    return reachable;
 }
 
 void motorLoop(int sockfd) {
@@ -251,20 +249,25 @@ void motorLoop(int sockfd) {
     json j;
 
     while (!go_shutdown.load(std::memory_order_relaxed)) {
-        if (inputHandler.readLastJob(j)) {
+        if (jobHandler.readLastJob(j)) {
             try {
                 const std::string type = j.at("type");
                 if (type == "coords") {
                     double x = 0.0, y = 0.0;
                     double outA = 0.0, outB = 0.0;
                     coordsJobParse(j, x, y);
-                    computeAngles(x, y, outA, outB);
-                    // send motor command
-                    char buffer[50];
-                    std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
-                    std::string message(buffer);
-                    std::cout << "Sending command: " << message;
-                    send(sockfd, message.c_str(), message.size(), 0);
+                    if (computeAngles(x, y, outA, outB)) {
+                        // send motor command
+                        char buffer[50];
+                        std::snprintf(buffer, sizeof(buffer), "MOTOR %.2f %.2f\n", outA, outB); // round to 2 decimal places
+                        std::string message(buffer);
+                        std::cout << "Sending command: " << message;
+                        send(sockfd, message.c_str(), message.size(), 0);
+                    } else {
+                        std::cerr << "[warn] Target coordinates (" << x << ", " << y << ") are unreachable.\n";
+                        ws_send_message("UNR"); // UNREACHABLE
+                    }
+
                 } else if (type == "grip") {
                     std::string message = grabJobParse(j);
                     std::cout << "Sending command: " << message;
@@ -284,6 +287,7 @@ void motorLoop(int sockfd) {
                 std::cout << "EV3: " << line << "\n";
             } else {
                 std::cout << "Command OK.\n";
+                ws_send_message("CMP"); // COMPLETED
             }
         }
 

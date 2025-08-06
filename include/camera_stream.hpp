@@ -1,8 +1,9 @@
 #pragma once
 #include <nlohmann/json.hpp>
 #include <queue>
+#include <mutex>
 
-class InputHandler {
+class JobHandler {
 public:
     // Read-only access
     bool readLastJob(nlohmann::json &job);
@@ -12,8 +13,9 @@ private:
     std::queue<nlohmann::json> job_queue;
 };
 
-extern InputHandler inputHandler;
+extern JobHandler jobHandler;
 
-// External functions (not related to the state)
+// External functions
 void start_mjpeg_server(bool stream);
 void stop_mjpeg_server();
+void send_ws_message(const std::string& msg);

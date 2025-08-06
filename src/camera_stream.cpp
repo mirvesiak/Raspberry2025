@@ -13,9 +13,12 @@ using json = nlohmann::json;
 static cv::VideoCapture cam;
 static std::atomic<bool> keep_running{true};
 
-InputHandler inputHandler;
+JobHandler jobHandler;
 
-bool InputHandler::readLastJob(json &job) {
+static mg_connection *ws_client_conn = nullptr;  // WebSocket client connection
+static std::mutex ws_conn_mutex;
+
+bool JobHandler::readLastJob(json &job) {
     if (!job_queue.empty()) {
         job = job_queue.front();
         job_queue.pop();
@@ -24,11 +27,22 @@ bool InputHandler::readLastJob(json &job) {
     return false;
 }
 
-void InputHandler::addJob(json job) {
+void JobHandler::addJob(json job) {
     job_queue.push(job);
 }
 
-static int wsConnect(const mg_connection*, void*) { return 0; }           // accept all
+static int wsConnect(const mg_connection* conn, void*) {
+    std::lock_guard<std::mutex> lock(ws_conn_mutex);
+    ws_client_conn = (mg_connection*)conn;
+    return 0; // accept all
+}       
+
+static void wsClose(const mg_connection* conn, void*) {
+    std::lock_guard<std::mutex> lock(ws_conn_mutex);
+    if (ws_client_conn == conn) {
+        ws_client_conn = nullptr;
+    }
+}
 
 static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
     std::string msg(data, len);
@@ -36,35 +50,22 @@ static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
     try
     {
         json j = json::parse(msg);
-        inputHandler.addJob(j);
+        jobHandler.addJob(j);
     }
     catch(const json::parse_error& e)
     {
         std::cerr << "JSON parse error: " << e.what() << "\n";
     }
-    
-    
-    // try {
-        
-    //     const std::string type = j.at("type");
-    //     if (type == "coords") {
-    //         inputHandler.updateCoords(j['x'], j['y']);
-    //     } else if (type == "grip") {
-    //         std::string state = j.at("state");
-    //         if (state == "on") {
-    //             inputHandler.setGrabbing(true);
-    //         } else if (state == "off") {
-    //             inputHandler.setGrabbing(false);
-    //         }
-    //     } else {
-    //         std::cerr << "[warn] Unknown JSON type: " << type << std::endl;
-    //     }
-    // } catch (const std::exception& e) {
-    //     std::cerr << "[error] Invalid JSON: " << e.what() << std::endl;
-    // }
+
     return 1; // keep the connection open
 }
 
+void send_ws_message(const std::string& msg) {
+    std::lock_guard<std::mutex> lock(ws_conn_mutex);
+    if (ws_client_conn != nullptr) {
+        mg_websocket_write(ws_client_conn, WEBSOCKET_OPCODE_TEXT, msg.c_str(), msg.size());
+    }
+}
 
 static int streamHandler(struct mg_connection *conn, void * /*cbdata*/) {
     // 1.  HTTP headers for MJPEG
@@ -131,7 +132,7 @@ void start_mjpeg_server(bool stream) {
         mg_set_request_handler(ctx, "/stream", streamHandler, nullptr);
         std::puts("MJPEG stream running on http://raspberrypi.local:8080/stream");
     }
-    mg_set_websocket_handler(ctx, "/ws", wsConnect, nullptr, wsMessage, nullptr, nullptr);
+    mg_set_websocket_handler(ctx, "/ws", wsConnect, nullptr, wsMessage, wsClose, nullptr);
 }
 
 void stop_mjpeg_server() { keep_running = false; }
