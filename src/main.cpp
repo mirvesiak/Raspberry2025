@@ -78,14 +78,13 @@ int main()
     if (motorThreadStarted && motorThread.joinable()) {
         go_shutdown.store(true);  // Ensure motor thread sees the shutdown signal
         motorThread.join();
-
-        if (sockfd >= 0) {
-            std::string message = "SHUTDOWN";
-            send(sockfd, message.c_str(), message.size(), 0);
-            shutdown(sockfd, SHUT_RDWR);
-        }
     }
-
+    
+    if (ev3_started) {
+        std::string message = "SHUTDOWN";
+        send(sockfd, message.c_str(), message.size(), 0);
+        shutdown(sockfd, SHUT_RDWR);
+    }
     std::cout << "Shutdown complete.\n";
     return 0;
 }
