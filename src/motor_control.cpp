@@ -265,7 +265,7 @@ void motorLoop(int sockfd) {
                         send(sockfd, message.c_str(), message.size(), 0);
                     } else {
                         std::cerr << "[warn] Target coordinates (" << x << ", " << y << ") are unreachable.\n";
-                        ws_send_message("UNR"); // UNREACHABLE
+                        send_ws_message("UNR"); // UNREACHABLE
                     }
 
                 } else if (type == "grip") {
@@ -287,7 +287,7 @@ void motorLoop(int sockfd) {
                 std::cout << "EV3: " << line << "\n";
             } else {
                 std::cout << "Command OK.\n";
-                ws_send_message("CMP"); // COMPLETED
+                send_ws_message("CMP"); // COMPLETED
             }
         }
 

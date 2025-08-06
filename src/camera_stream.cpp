@@ -63,7 +63,7 @@ static int wsMessage(mg_connection *conn, int, char *data, size_t len, void*) {
 void send_ws_message(const std::string& msg) {
     std::lock_guard<std::mutex> lock(ws_conn_mutex);
     if (ws_client_conn != nullptr) {
-        mg_websocket_write(ws_client_conn, WEBSOCKET_OPCODE_TEXT, msg.c_str(), msg.size());
+        mg_websocket_write(ws_client_conn, MG_WEBSOCKET_OPCODE_TEXT, msg.c_str(), msg.size());
     }
 }
 
