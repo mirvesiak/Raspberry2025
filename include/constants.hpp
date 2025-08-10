@@ -15,7 +15,7 @@ namespace Constants {
     constexpr double L1 = 11.3;
     constexpr double L2 = 6.8;
     constexpr double offset = 6.0;
-    constexpr double J1_limit = 170.0;
+    constexpr double J1_limit = 180.0;
     constexpr double J2_limit = 90.0;
 
     // EV3 connection constants
