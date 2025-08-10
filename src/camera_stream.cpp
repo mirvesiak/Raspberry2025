@@ -92,7 +92,7 @@ static int streamHandler(struct mg_connection *conn, void * /*cbdata*/) {
 
         // 2. Re‑encode to JPEG (quality=70 → good size/latency compromise)
         jpg.clear();
-        cv::imencode(".jpg", cropped, jpg, {cv::IMWRITE_JPEG_QUALITY, 70});
+        cv::imencode(".jpg", cropped, jpg, {cv::IMWRITE_JPEG_QUALITY, 90});
 
         // 3. Send multipart boundary + JPEG chunk
         mg_printf(conn,
@@ -117,6 +117,9 @@ void start_mjpeg_server(bool stream) {
         cam.set(cv::CAP_PROP_FRAME_WIDTH,  1280);
         cam.set(cv::CAP_PROP_FRAME_HEIGHT, 720);
         cam.set(cv::CAP_PROP_FPS, 30);
+        cam.set(cv::CAP_PROP_AUTO_EXPOSURE, 0.25); // Manual
+        cam.set(cv::CAP_PROP_EXPOSURE, 200);       // Value depends on sensor
+        cam.set(cv::CAP_PROP_WHITE_BALANCE_BLUE_U, 4500);
     }
     // CivetWeb config
     const char *options[] = {
