@@ -16,7 +16,7 @@ It demonstrates:
 ---
 
 ## Demo
-![hippo](./media/boomerang.gif)
+![gif](https://github.com/user-attachments/assets/ea8cd105-16bd-43cf-8fe0-d9fb1cedc7fa)
 
 Check out the working robot in action:  
 [Robot Demo](https://drive.google.com/drive/folders/1o6wbz60c94M4pmIxw0zZA2ccyk3x5JwP?usp=drive_link)
