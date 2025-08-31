@@ -34,14 +34,6 @@
 # Build files
 build/*
 
-# EV3 files
-ev3/*
-
-# App files
-app/*
-
-captures/*
-
-YOLO/*
+app/__pycache__/*
 
 testing/*
