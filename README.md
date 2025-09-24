@@ -9,20 +9,7 @@ A 2-DOF LEGO Mindstorms EV3 robot that sorts cylinders by color. The Raspberry P
 ---
 
 ## Demo
-![](https://github.com/mirvesiak/Raspberry2025/media/boomerang.gif)
-
-Check out the working robot in action:
+![](https://github.com/mirvesiak/Raspberry2025/blob/main/media/boomerang.gif)
+<--
 [Robot Demo](https://drive.google.com/drive/folders/1o6wbz60c94M4pmIxw0zZA2ccyk3x5JwP?usp=drive_link)
-
----
-
-## Features
-- 2-DOF robotic arm design  
-- Forward & inverse kinematics  
-- Python-based control code  
-- Hardware documentation and CAD files  
-- Media folder with photos and videos  
-
----
-
-## Repository Structure
+-->
